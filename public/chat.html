@@ -25,6 +25,8 @@
       --accent-fg: #0e9a83;
       --input-bg: #f3f4f7;
       --shadow: 0 1px 3px rgba(0,0,0,0.06);
+      --sidebar-w: 260px;
+      --danger: #ef4444;
     }
 
     body {
@@ -33,9 +35,84 @@
       color: var(--text);
       height: 100vh;
       display: flex;
-      flex-direction: column;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      height: 100vh;
+      transition: transform 0.2s;
+    }
+    .sidebar.hidden { transform: translateX(-100%); position: absolute; z-index: 10; height: 100%; }
+    .sidebar-header {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+    .new-chat-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--accent-bg);
+      color: var(--accent-fg);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .new-chat-btn:hover { background: var(--primary); color: var(--primary-fg); }
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .chat-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-bottom: 2px;
+      transition: background 0.15s;
+      gap: 8px;
+    }
+    .chat-item:hover { background: var(--input-bg); }
+    .chat-item.active { background: var(--accent-bg); color: var(--accent-fg); font-weight: 500; }
+    .chat-item-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chat-item-delete {
+      opacity: 0;
+      border: none;
+      background: none;
+      color: var(--danger);
+      cursor: pointer;
+      padding: 2px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+    }
+    .chat-item:hover .chat-item-delete { opacity: 1; }
+    .chat-item-delete:hover { background: rgba(239,68,68,0.1); }
+
+    /* Main */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
     }
 
     /* Header */
@@ -46,6 +123,21 @@
       padding: 12px 16px;
       background: var(--card);
       border-bottom: 1px solid var(--border);
+    }
+    .menu-btn {
+      display: none;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--text);
+      padding: 4px;
+    }
+    @media (max-width: 700px) {
+      .sidebar { position: absolute; z-index: 10; height: 100%; transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .menu-btn { display: flex; }
+      .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 9; }
+      .overlay.show { display: block; }
     }
     .header-icon {
       width: 36px; height: 36px;
@@ -241,71 +333,200 @@
     .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .send-btn:not(:disabled):hover { opacity: 0.85; }
     .send-btn svg { width: 16px; height: 16px; }
+
+    .no-chats { padding: 20px; text-align: center; font-size: 13px; color: var(--text-muted); }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <div class="header">
-    <div class="header-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-        <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
-      </svg>
+  <!-- Overlay for mobile sidebar -->
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <button class="new-chat-btn" onclick="newChat()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ny chatt
+      </button>
     </div>
-    <div>
-      <h1>AI Assistent</h1>
-      <p>Fråga mig vad som helst</p>
+    <div class="chat-list" id="chatList">
+      <div class="no-chats" id="noChats">Inga sparade chattar</div>
     </div>
   </div>
 
-  <!-- Messages -->
-  <div class="messages" id="messages">
-    <div class="empty" id="empty">
-      <div class="empty-icon">
+  <!-- Main -->
+  <div class="main">
+    <!-- Header -->
+    <div class="header">
+      <button class="menu-btn" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="header-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
           <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
         </svg>
       </div>
       <div>
-        <h2>Hej! 👋</h2>
-        <p>Jag är din AI-assistent. Ställ en fråga eller välj ett förslag nedan.</p>
-      </div>
-      <div class="suggestions">
-        <button class="suggestion-btn" onclick="send('Förklara hur internet fungerar')">Förklara hur internet fungerar</button>
-        <button class="suggestion-btn" onclick="send('Ge mig tips för att plugga effektivt')">Ge mig tips för att plugga effektivt</button>
-        <button class="suggestion-btn" onclick="send('Skriv en kort dikt om programmering')">Skriv en kort dikt om programmering</button>
-        <button class="suggestion-btn" onclick="send('Vad är artificiell intelligens?')">Vad är artificiell intelligens?</button>
+        <h1>AI Assistent</h1>
+        <p>Fråga mig vad som helst</p>
       </div>
     </div>
-    <div class="messages-inner" id="msgList" style="display:none;"></div>
-  </div>
 
-  <!-- Input -->
-  <div class="input-area">
-    <div class="input-inner">
-      <textarea id="input" rows="1" placeholder="Skriv ett meddelande..." onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
-      <button class="send-btn" id="sendBtn" onclick="send()" disabled>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>
-        </svg>
-      </button>
+    <!-- Messages -->
+    <div class="messages" id="messages">
+      <div class="empty" id="empty">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+            <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Hej! 👋</h2>
+          <p>Jag är din AI-assistent. Ställ en fråga eller välj ett förslag nedan.</p>
+        </div>
+        <div class="suggestions">
+          <button class="suggestion-btn" onclick="send('Förklara hur internet fungerar')">Förklara hur internet fungerar</button>
+          <button class="suggestion-btn" onclick="send('Ge mig tips för att plugga effektivt')">Ge mig tips för att plugga effektivt</button>
+          <button class="suggestion-btn" onclick="send('Skriv en kort dikt om programmering')">Skriv en kort dikt om programmering</button>
+          <button class="suggestion-btn" onclick="send('Vad är artificiell intelligens?')">Vad är artificiell intelligens?</button>
+        </div>
+      </div>
+      <div class="messages-inner" id="msgList" style="display:none;"></div>
+    </div>
+
+    <!-- Input -->
+    <div class="input-area">
+      <div class="input-inner">
+        <textarea id="input" rows="1" placeholder="Skriv ett meddelande..." onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="send()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 
   <script>
     const CHAT_URL = "https://uthfklmmfbjuxnrshejk.supabase.co/functions/v1/chat";
     const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0aGZrbG1tZmJqdXhucnNoZWprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2Mjg2MDIsImV4cCI6MjA4ODIwNDYwMn0.94AlXJuyzmZqmeGPJ1wsADsopaDGnML0HqgSyV4oHr0";
+    const STORAGE_KEY = "ai_chats";
 
     let messages = [];
     let loading = false;
+    let currentChatId = null;
+    let chats = {}; // { id: { title, messages, updatedAt } }
 
     const inputEl = document.getElementById("input");
     const sendBtn = document.getElementById("sendBtn");
     const msgList = document.getElementById("msgList");
     const emptyEl = document.getElementById("empty");
     const msgsContainer = document.getElementById("messages");
+    const chatListEl = document.getElementById("chatList");
+    const noChatsEl = document.getElementById("noChats");
+    const sidebarEl = document.getElementById("sidebar");
+    const overlayEl = document.getElementById("overlay");
+
+    // Load chats from localStorage
+    function loadChats() {
+      try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        if (data) chats = JSON.parse(data);
+      } catch { chats = {}; }
+    }
+
+    function saveChats() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+    }
+
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    function renderChatList() {
+      const sorted = Object.entries(chats).sort((a, b) => b[1].updatedAt - a[1].updatedAt);
+      noChatsEl.style.display = sorted.length ? "none" : "block";
+      
+      // Keep noChats, remove rest
+      chatListEl.querySelectorAll(".chat-item").forEach(el => el.remove());
+
+      sorted.forEach(([id, chat]) => {
+        const div = document.createElement("div");
+        div.className = "chat-item" + (id === currentChatId ? " active" : "");
+        div.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span class="chat-item-title">${escapeHtml(chat.title)}</span>
+          <button class="chat-item-delete" title="Radera" onclick="event.stopPropagation(); deleteChat('${id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        `;
+        div.onclick = () => loadChat(id);
+        chatListEl.appendChild(div);
+      });
+    }
+
+    function newChat() {
+      currentChatId = null;
+      messages = [];
+      msgList.innerHTML = "";
+      msgList.style.display = "none";
+      emptyEl.style.display = "flex";
+      renderChatList();
+      closeSidebar();
+      inputEl.focus();
+    }
+
+    function loadChat(id) {
+      const chat = chats[id];
+      if (!chat) return;
+      currentChatId = id;
+      messages = [...chat.messages];
+      
+      msgList.innerHTML = "";
+      emptyEl.style.display = "none";
+      msgList.style.display = "flex";
+
+      messages.forEach(m => addMessage(m.role, m.content));
+      renderChatList();
+      closeSidebar();
+      scrollDown();
+    }
+
+    function saveCurrentChat() {
+      if (!messages.length) return;
+      if (!currentChatId) currentChatId = generateId();
+      
+      // Use first user message as title
+      const firstUser = messages.find(m => m.role === "user");
+      const title = firstUser ? firstUser.content.slice(0, 50) : "Ny chatt";
+
+      chats[currentChatId] = {
+        title,
+        messages: [...messages],
+        updatedAt: Date.now()
+      };
+      saveChats();
+      renderChatList();
+    }
+
+    function deleteChat(id) {
+      delete chats[id];
+      saveChats();
+      if (currentChatId === id) newChat();
+      renderChatList();
+    }
+
+    function toggleSidebar() {
+      sidebarEl.classList.toggle("open");
+      overlayEl.classList.toggle("show");
+    }
+    function closeSidebar() {
+      sidebarEl.classList.remove("open");
+      overlayEl.classList.remove("show");
+    }
 
     inputEl.addEventListener("input", () => {
       sendBtn.disabled = !inputEl.value.trim() || loading;
@@ -327,26 +548,17 @@
       msgsContainer.scrollTop = msgsContainer.scrollHeight;
     }
 
-    // Simple markdown: bold, italic, code blocks, inline code, lists, paragraphs
     function renderMarkdown(text) {
       let html = text
-        // Code blocks
         .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-        // Inline code
         .replace(/`([^`]+)`/g, '<code>$1</code>')
-        // Bold
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        // Italic
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        // Unordered lists
         .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
-        // Ordered lists
         .replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
 
-      // Wrap consecutive <li> in <ul>
       html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
 
-      // Paragraphs
       html = html.split(/\n\n+/).map(p => {
         p = p.trim();
         if (!p) return '';
@@ -401,16 +613,13 @@
       sendBtn.disabled = true;
       loading = true;
 
-      // Show messages area
       emptyEl.style.display = "none";
       msgList.style.display = "flex";
 
-      // Add user message
       messages.push({ role: "user", content });
       addMessage("user", content);
       scrollDown();
 
-      // Show typing
       showTyping();
 
       try {
@@ -434,7 +643,6 @@
           return;
         }
 
-        // Stream response
         const reader = resp.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
@@ -477,6 +685,9 @@
           messages.push({ role: "assistant", content: assistantText });
         }
 
+        // Auto-save after each exchange
+        saveCurrentChat();
+
       } catch (err) {
         hideTyping();
         addMessage("assistant", "Kunde inte ansluta till AI:n. Kontrollera din internetanslutning.");
@@ -487,6 +698,10 @@
       inputEl.focus();
       scrollDown();
     }
+
+    // Init
+    loadChats();
+    renderChatList();
   </script>
 </body>
 </html>
