@@ -124,14 +124,21 @@
       background: var(--card);
       border-bottom: 1px solid var(--border);
     }
-    .menu-btn {
-      display: none;
+    .menu-btn, .settings-btn {
       border: none;
       background: none;
       cursor: pointer;
       color: var(--text);
       padding: 4px;
+      display: flex;
+      align-items: center;
+      border-radius: 8px;
+      transition: background 0.15s;
     }
+    .menu-btn { display: none; }
+    .settings-btn:hover { background: var(--input-bg); }
+    .settings-btn.active { background: var(--accent-bg); color: var(--accent-fg); }
+    .header-spacer { flex: 1; }
     @media (max-width: 700px) {
       .sidebar { position: absolute; z-index: 10; height: 100%; transform: translateX(-100%); }
       .sidebar.open { transform: translateX(0); }
@@ -148,6 +155,69 @@
     .header-icon svg { width: 18px; height: 18px; color: var(--primary-fg); }
     .header h1 { font-size: 16px; font-weight: 600; line-height: 1.2; }
     .header p { font-size: 12px; color: var(--text-muted); }
+
+    /* Theme panel */
+    .theme-panel {
+      display: none;
+      position: absolute;
+      top: 56px;
+      right: 16px;
+      z-index: 50;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      width: 280px;
+      animation: panelIn 0.2s ease-out;
+    }
+    .theme-panel.open { display: block; }
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .theme-panel h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    /* Color wheel */
+    .color-wheel {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 16px;
+    }
+    .color-swatch {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 3px solid var(--card);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .color-swatch:hover { transform: scale(1.15); }
+    .color-swatch.active {
+      border-color: var(--text);
+      transform: scale(1.2);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    .color-swatch svg { width: 18px; height: 18px; opacity: 0; }
+    .color-swatch.active svg { opacity: 1; }
+
+    .theme-name {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
 
     /* Messages area */
     .messages {
@@ -372,6 +442,20 @@
         <h1>AI Assistent</h1>
         <p>Fråga mig vad som helst</p>
       </div>
+      <div class="header-spacer"></div>
+      <button class="settings-btn" id="settingsBtn" onclick="toggleThemePanel()" title="Ändra tema">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Theme panel -->
+    <div class="theme-panel" id="themePanel">
+      <h3>🎨 Välj tema</h3>
+      <div class="color-wheel" id="colorWheel"></div>
+      <div class="theme-name" id="themeName">Standard</div>
     </div>
 
     <!-- Messages -->
@@ -414,11 +498,101 @@
     const CHAT_URL = "https://uthfklmmfbjuxnrshejk.supabase.co/functions/v1/chat";
     const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0aGZrbG1tZmJqdXhucnNoZWprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2Mjg2MDIsImV4cCI6MjA4ODIwNDYwMn0.94AlXJuyzmZqmeGPJ1wsADsopaDGnML0HqgSyV4oHr0";
     const STORAGE_KEY = "ai_chats";
+    const THEME_KEY = "ai_theme";
 
+    // ── Themes ──
+    const themes = [
+      { name: "Standard", color: "#0e9a83", bg: "#f3f4f7", card: "#ffffff", border: "#e0e2e8", text: "#1a1d26", textMuted: "#6b7280", userBg: "#d6f5ef", userFg: "#0c3d33", aiBg: "#ffffff", aiFg: "#1a1d26", accentBg: "#e8f8f4", accentFg: "#0e9a83", inputBg: "#f3f4f7" },
+      { name: "Mörkt", color: "#1a1a2e", bg: "#0f0f1a", card: "#1a1a2e", border: "#2a2a40", text: "#e0e0e8", textMuted: "#8888a0", userBg: "#2e2e50", userFg: "#c8c8e0", aiBg: "#1e1e35", aiFg: "#d8d8e8", accentBg: "#252545", accentFg: "#7c7cf0", inputBg: "#151528", primaryFg: "#ffffff", primary: "#7c7cf0" },
+      { name: "Havblå", color: "#1e88e5", bg: "#eef4fb", card: "#ffffff", border: "#c8ddf0", text: "#1a2a3a", textMuted: "#5a7a9a", userBg: "#d0e8ff", userFg: "#0d3a6a", aiBg: "#ffffff", aiFg: "#1a2a3a", accentBg: "#dceefb", accentFg: "#1e88e5", inputBg: "#eef4fb" },
+      { name: "Sunset", color: "#e65100", bg: "#fef5f0", card: "#ffffff", border: "#f0d8c8", text: "#2a1a10", textMuted: "#9a7a5a", userBg: "#ffe0c8", userFg: "#6a2a00", aiBg: "#ffffff", aiFg: "#2a1a10", accentBg: "#fff0e0", accentFg: "#e65100", inputBg: "#fef5f0" },
+      { name: "Lavendel", color: "#7c4dff", bg: "#f5f0ff", card: "#ffffff", border: "#d8c8f0", text: "#1a1030", textMuted: "#7a6a9a", userBg: "#e8d8ff", userFg: "#3a1a6a", aiBg: "#ffffff", aiFg: "#1a1030", accentBg: "#f0e8ff", accentFg: "#7c4dff", inputBg: "#f5f0ff" },
+      { name: "Skogsgrön", color: "#2e7d32", bg: "#f0f7f0", card: "#ffffff", border: "#c0dcc0", text: "#1a2a1a", textMuted: "#5a7a5a", userBg: "#c8f0c8", userFg: "#0a3a0a", aiBg: "#ffffff", aiFg: "#1a2a1a", accentBg: "#e0f5e0", accentFg: "#2e7d32", inputBg: "#f0f7f0" },
+      { name: "Rosé", color: "#d81b60", bg: "#fef0f5", card: "#ffffff", border: "#f0c0d0", text: "#2a101a", textMuted: "#9a5a7a", userBg: "#ffd0e0", userFg: "#6a0a2a", aiBg: "#ffffff", aiFg: "#2a101a", accentBg: "#ffe8f0", accentFg: "#d81b60", inputBg: "#fef0f5" },
+      { name: "Svart & Vitt", color: "#000000", bg: "#ffffff", card: "#ffffff", border: "#e0e0e0", text: "#000000", textMuted: "#666666", userBg: "#000000", userFg: "#ffffff", aiBg: "#f5f5f5", aiFg: "#000000", accentBg: "#f0f0f0", accentFg: "#000000", inputBg: "#f5f5f5" },
+      { name: "Midnatt", color: "#00bcd4", bg: "#0a0e14", card: "#12181f", border: "#1e2832", text: "#d0dce8", textMuted: "#607080", userBg: "#0a3040", userFg: "#80e0f0", aiBg: "#151d25", aiFg: "#c8d8e8", accentBg: "#0e2030", accentFg: "#00bcd4", inputBg: "#0e1318", primaryFg: "#ffffff", primary: "#00bcd4" },
+      { name: "Guld", color: "#f9a825", bg: "#fefcf5", card: "#ffffff", border: "#f0e0b0", text: "#2a2010", textMuted: "#8a7a50", userBg: "#fff0c0", userFg: "#5a4000", aiBg: "#ffffff", aiFg: "#2a2010", accentBg: "#fff8e0", accentFg: "#e09000", inputBg: "#fefcf5" },
+      { name: "Korall", color: "#ff6f61", bg: "#fff5f3", card: "#ffffff", border: "#f0c8c0", text: "#2a1510", textMuted: "#9a6a60", userBg: "#ffd8d0", userFg: "#6a1a10", aiBg: "#ffffff", aiFg: "#2a1510", accentBg: "#ffe8e5", accentFg: "#ff6f61", inputBg: "#fff5f3" },
+      { name: "Neon", color: "#39ff14", bg: "#0a0a0a", card: "#141414", border: "#252525", text: "#e0ffe0", textMuted: "#60a060", userBg: "#0a2a0a", userFg: "#60ff40", aiBg: "#181818", aiFg: "#d0f0d0", accentBg: "#0f1f0f", accentFg: "#39ff14", inputBg: "#0e0e0e", primaryFg: "#000000", primary: "#39ff14" },
+    ];
+
+    let currentThemeIdx = 0;
+
+    function applyTheme(idx) {
+      const t = themes[idx];
+      const r = document.documentElement.style;
+      r.setProperty('--bg', t.bg);
+      r.setProperty('--card', t.card);
+      r.setProperty('--border', t.border);
+      r.setProperty('--primary', t.primary || t.color);
+      r.setProperty('--primary-fg', t.primaryFg || '#ffffff');
+      r.setProperty('--text', t.text);
+      r.setProperty('--text-muted', t.textMuted);
+      r.setProperty('--chat-user-bg', t.userBg);
+      r.setProperty('--chat-user-fg', t.userFg);
+      r.setProperty('--chat-ai-bg', t.aiBg);
+      r.setProperty('--chat-ai-fg', t.aiFg);
+      r.setProperty('--accent-bg', t.accentBg);
+      r.setProperty('--accent-fg', t.accentFg);
+      r.setProperty('--input-bg', t.inputBg);
+      currentThemeIdx = idx;
+      localStorage.setItem(THEME_KEY, idx);
+      document.getElementById('themeName').textContent = t.name;
+      renderWheel();
+    }
+
+    function renderWheel() {
+      const wheel = document.getElementById('colorWheel');
+      wheel.innerHTML = '';
+      const count = themes.length;
+      const cx = 100, cy = 100, radius = 78;
+      const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+      themes.forEach((t, i) => {
+        const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
+        const x = cx + radius * Math.cos(angle) - 22;
+        const y = cy + radius * Math.sin(angle) - 22;
+        const swatch = document.createElement('div');
+        swatch.className = 'color-swatch' + (i === currentThemeIdx ? ' active' : '');
+        swatch.style.left = x + 'px';
+        swatch.style.top = y + 'px';
+        swatch.style.background = t.color;
+        // set check color based on brightness
+        const bright = isLight(t.color);
+        swatch.innerHTML = `<span style="color:${bright ? '#000' : '#fff'}">${checkSvg}</span>`;
+        swatch.onclick = () => applyTheme(i);
+        swatch.title = t.name;
+        wheel.appendChild(swatch);
+      });
+    }
+
+    function isLight(hex) {
+      const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+      return (r*299 + g*587 + b*114) / 1000 > 150;
+    }
+
+    function toggleThemePanel() {
+      const panel = document.getElementById('themePanel');
+      const btn = document.getElementById('settingsBtn');
+      const isOpen = panel.classList.toggle('open');
+      btn.classList.toggle('active', isOpen);
+    }
+
+    // Close theme panel when clicking outside
+    document.addEventListener('click', (e) => {
+      const panel = document.getElementById('themePanel');
+      const btn = document.getElementById('settingsBtn');
+      if (panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target)) {
+        panel.classList.remove('open');
+        btn.classList.remove('active');
+      }
+    });
+
+    // ── Chat logic ──
     let messages = [];
     let loading = false;
     let currentChatId = null;
-    let chats = {}; // { id: { title, messages, updatedAt } }
+    let chats = {};
 
     const inputEl = document.getElementById("input");
     const sendBtn = document.getElementById("sendBtn");
@@ -430,7 +604,6 @@
     const sidebarEl = document.getElementById("sidebar");
     const overlayEl = document.getElementById("overlay");
 
-    // Load chats from localStorage
     function loadChats() {
       try {
         const data = localStorage.getItem(STORAGE_KEY);
@@ -449,8 +622,6 @@
     function renderChatList() {
       const sorted = Object.entries(chats).sort((a, b) => b[1].updatedAt - a[1].updatedAt);
       noChatsEl.style.display = sorted.length ? "none" : "block";
-      
-      // Keep noChats, remove rest
       chatListEl.querySelectorAll(".chat-item").forEach(el => el.remove());
 
       sorted.forEach(([id, chat]) => {
@@ -484,11 +655,9 @@
       if (!chat) return;
       currentChatId = id;
       messages = [...chat.messages];
-      
       msgList.innerHTML = "";
       emptyEl.style.display = "none";
       msgList.style.display = "flex";
-
       messages.forEach(m => addMessage(m.role, m.content));
       renderChatList();
       closeSidebar();
@@ -498,16 +667,9 @@
     function saveCurrentChat() {
       if (!messages.length) return;
       if (!currentChatId) currentChatId = generateId();
-      
-      // Use first user message as title
       const firstUser = messages.find(m => m.role === "user");
       const title = firstUser ? firstUser.content.slice(0, 50) : "Ny chatt";
-
-      chats[currentChatId] = {
-        title,
-        messages: [...messages],
-        updatedAt: Date.now()
-      };
+      chats[currentChatId] = { title, messages: [...messages], updatedAt: Date.now() };
       saveChats();
       renderChatList();
     }
@@ -538,10 +700,7 @@
     }
 
     function handleKey(e) {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        send();
-      }
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
     }
 
     function scrollDown() {
@@ -556,16 +715,13 @@
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
         .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
         .replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-
       html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
-
       html = html.split(/\n\n+/).map(p => {
         p = p.trim();
         if (!p) return '';
         if (p.startsWith('<pre>') || p.startsWith('<ul>') || p.startsWith('<ol>')) return p;
         return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
       }).join('');
-
       return html;
     }
 
@@ -619,7 +775,6 @@
       messages.push({ role: "user", content });
       addMessage("user", content);
       scrollDown();
-
       showTyping();
 
       try {
@@ -684,8 +839,6 @@
         if (assistantText) {
           messages.push({ role: "assistant", content: assistantText });
         }
-
-        // Auto-save after each exchange
         saveCurrentChat();
 
       } catch (err) {
@@ -702,6 +855,10 @@
     // Init
     loadChats();
     renderChatList();
+    // Load saved theme
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    if (savedTheme !== null) applyTheme(parseInt(savedTheme));
+    else renderWheel();
   </script>
 </body>
 </html>
