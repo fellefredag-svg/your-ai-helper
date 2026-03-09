@@ -759,6 +759,21 @@
       return html;
     }
 
+    function downloadImage(src) {
+      const a = document.createElement('a');
+      a.download = 'ai-bild-' + Date.now() + '.png';
+      if (src.startsWith('data:')) {
+        a.href = src;
+        a.click();
+      } else {
+        fetch(src).then(r => r.blob()).then(blob => {
+          a.href = URL.createObjectURL(blob);
+          a.click();
+          URL.revokeObjectURL(a.href);
+        }).catch(() => { window.open(src, '_blank'); });
+      }
+    }
+
     const userSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
     const botSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>';
 
