@@ -389,7 +389,7 @@
       box-shadow: 0 0 0 2px rgba(14, 154, 131, 0.15);
     }
     .input-inner textarea::placeholder { color: var(--text-muted); }
-    .send-btn, .img-btn {
+    .send-btn, .img-btn, .upload-btn {
       width: 40px; height: 40px;
       flex-shrink: 0;
       border-radius: 12px;
@@ -406,10 +406,30 @@
       background: var(--accent-bg);
       color: var(--accent-fg);
     }
-    .img-btn:hover { opacity: 0.85; }
-    .send-btn:disabled, .img-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .upload-btn {
+      background: var(--accent-bg);
+      color: var(--accent-fg);
+      position: relative;
+    }
+    .upload-btn input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .img-btn:hover, .upload-btn:hover { opacity: 0.85; }
+    .send-btn:disabled, .img-btn:disabled, .upload-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .send-btn:not(:disabled):hover { opacity: 0.85; }
-    .send-btn svg, .img-btn svg { width: 16px; height: 16px; }
+    .send-btn svg, .img-btn svg, .upload-btn svg { width: 16px; height: 16px; }
+    .upload-preview {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px; margin-bottom: 6px;
+      background: var(--accent-bg); border-radius: 10px;
+      font-size: 12px; color: var(--accent-fg);
+      max-width: 640px; margin-left: auto; margin-right: auto;
+    }
+    .upload-preview img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; }
+    .upload-preview .remove-upload {
+      margin-left: auto; background: none; border: none;
+      color: var(--danger); cursor: pointer; font-size: 16px; line-height: 1;
+    }
     .msg-bubble img { max-width: 100%; border-radius: 12px; margin: 8px 0; }
     .img-loading { display: flex; align-items: center; gap: 8px; padding: 12px 16px; font-size: 13px; color: var(--text-muted); }
     .img-loading .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -507,8 +527,19 @@
 
     <!-- Input -->
     <div class="input-area">
+      <div class="upload-preview" id="uploadPreview" style="display:none;">
+        <img id="uploadThumb" src="" alt="Uppladdad bild">
+        <span id="uploadName">bild.jpg</span>
+        <button class="remove-upload" onclick="clearUpload()" title="Ta bort">✕</button>
+      </div>
       <div class="input-inner">
         <textarea id="input" rows="1" placeholder="Skriv ett meddelande..." onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
+        <button class="upload-btn" id="uploadBtn" title="Ladda upp en bild att redigera">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(this)">
+        </button>
         <button class="img-btn" id="imgBtn" onclick="generateImage()" disabled title="Generera bild från texten">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -630,9 +661,35 @@
     const msgList = document.getElementById("msgList");
     const emptyEl = document.getElementById("empty");
     const msgsContainer = document.getElementById("messages");
-    const chatListEl = document.getElementById("chatList");
-    const noChatsEl = document.getElementById("noChats");
-    const sidebarEl = document.getElementById("sidebar");
+    const uploadPreview = document.getElementById("uploadPreview");
+    const uploadThumb = document.getElementById("uploadThumb");
+    const uploadName = document.getElementById("uploadName");
+    const fileInput = document.getElementById("fileInput");
+    let uploadedImageBase64 = null;
+
+    function handleFileSelect(input) {
+      const file = input.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { alert('Välj en bildfil.'); return; }
+      if (file.size > 10 * 1024 * 1024) { alert('Max 10MB.'); return; }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        uploadedImageBase64 = e.target.result;
+        uploadThumb.src = uploadedImageBase64;
+        uploadName.textContent = file.name;
+        uploadPreview.style.display = 'flex';
+        // Enable generate button when image is uploaded
+        imgBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearUpload() {
+      uploadedImageBase64 = null;
+      uploadPreview.style.display = 'none';
+      fileInput.value = '';
+      imgBtn.disabled = !inputEl.value.trim();
+    }
     const overlayEl = document.getElementById("overlay");
 
     function loadChats() {
@@ -724,7 +781,7 @@
     inputEl.addEventListener("input", () => {
       const hasText = !!inputEl.value.trim();
       sendBtn.disabled = !hasText || loading;
-      imgBtn.disabled = !hasText || loading;
+      imgBtn.disabled = (!hasText && !uploadedImageBase64) || loading;
     });
 
     function autoGrow(el) {
@@ -811,19 +868,25 @@
 
     async function generateImage() {
       const prompt = inputEl.value.trim();
-      if (!prompt || loading) return;
+      const hasImage = !!uploadedImageBase64;
+      if (!prompt && !hasImage) return;
+      if (loading) return;
+
+      const imageData = uploadedImageBase64;
+      const displayText = hasImage ? "🖼️✏️ " + (prompt || "Redigera bild") : "🖼️ " + prompt;
 
       inputEl.value = "";
       inputEl.style.height = "auto";
       sendBtn.disabled = true;
       imgBtn.disabled = true;
       loading = true;
+      clearUpload();
 
       emptyEl.style.display = "none";
       msgList.style.display = "flex";
 
-      messages.push({ role: "user", content: "🖼️ " + prompt });
-      addMessage("user", "🖼️ " + prompt);
+      messages.push({ role: "user", content: displayText });
+      addMessage("user", displayText);
       scrollDown();
 
       // Show loading
@@ -831,10 +894,13 @@
       loadDiv.className = "msg assistant";
       loadDiv.innerHTML = `
         <div class="msg-avatar" style="background:var(--accent-bg);color:var(--accent-fg)">${botSvg}</div>
-        <div class="msg-bubble"><div class="img-loading"><div class="spinner"></div> Genererar bild...</div></div>
+        <div class="msg-bubble"><div class="img-loading"><div class="spinner"></div> ${hasImage ? 'Redigerar bild...' : 'Genererar bild...'}</div></div>
       `;
       msgList.appendChild(loadDiv);
       scrollDown();
+
+      const body = { prompt: prompt || "Transform this image creatively" };
+      if (imageData) body.image = imageData;
 
       try {
         const resp = await fetch(IMAGE_URL, {
@@ -843,7 +909,7 @@
             "Content-Type": "application/json",
             "Authorization": "Bearer " + ANON_KEY,
           },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify(body),
         });
 
         loadDiv.remove();
