@@ -868,19 +868,25 @@
 
     async function generateImage() {
       const prompt = inputEl.value.trim();
-      if (!prompt || loading) return;
+      const hasImage = !!uploadedImageBase64;
+      if (!prompt && !hasImage) return;
+      if (loading) return;
+
+      const imageData = uploadedImageBase64;
+      const displayText = hasImage ? "🖼️✏️ " + (prompt || "Redigera bild") : "🖼️ " + prompt;
 
       inputEl.value = "";
       inputEl.style.height = "auto";
       sendBtn.disabled = true;
       imgBtn.disabled = true;
       loading = true;
+      clearUpload();
 
       emptyEl.style.display = "none";
       msgList.style.display = "flex";
 
-      messages.push({ role: "user", content: "🖼️ " + prompt });
-      addMessage("user", "🖼️ " + prompt);
+      messages.push({ role: "user", content: displayText });
+      addMessage("user", displayText);
       scrollDown();
 
       // Show loading
@@ -888,10 +894,13 @@
       loadDiv.className = "msg assistant";
       loadDiv.innerHTML = `
         <div class="msg-avatar" style="background:var(--accent-bg);color:var(--accent-fg)">${botSvg}</div>
-        <div class="msg-bubble"><div class="img-loading"><div class="spinner"></div> Genererar bild...</div></div>
+        <div class="msg-bubble"><div class="img-loading"><div class="spinner"></div> ${hasImage ? 'Redigerar bild...' : 'Genererar bild...'}</div></div>
       `;
       msgList.appendChild(loadDiv);
       scrollDown();
+
+      const body = { prompt: prompt || "Transform this image creatively" };
+      if (imageData) body.image = imageData;
 
       try {
         const resp = await fetch(IMAGE_URL, {
@@ -900,7 +909,7 @@
             "Content-Type": "application/json",
             "Authorization": "Bearer " + ANON_KEY,
           },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify(body),
         });
 
         loadDiv.remove();
