@@ -780,6 +780,76 @@
       if (el) el.remove();
     }
 
+    async function generateImage() {
+      const prompt = inputEl.value.trim();
+      if (!prompt || loading) return;
+
+      inputEl.value = "";
+      inputEl.style.height = "auto";
+      sendBtn.disabled = true;
+      imgBtn.disabled = true;
+      loading = true;
+
+      emptyEl.style.display = "none";
+      msgList.style.display = "flex";
+
+      messages.push({ role: "user", content: "🖼️ " + prompt });
+      addMessage("user", "🖼️ " + prompt);
+      scrollDown();
+
+      // Show loading
+      const loadDiv = document.createElement("div");
+      loadDiv.className = "msg assistant";
+      loadDiv.innerHTML = `
+        <div class="msg-avatar" style="background:var(--accent-bg);color:var(--accent-fg)">${botSvg}</div>
+        <div class="msg-bubble"><div class="img-loading"><div class="spinner"></div> Genererar bild...</div></div>
+      `;
+      msgList.appendChild(loadDiv);
+      scrollDown();
+
+      try {
+        const resp = await fetch(IMAGE_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + ANON_KEY,
+          },
+          body: JSON.stringify({ prompt }),
+        });
+
+        loadDiv.remove();
+
+        if (!resp.ok) {
+          const errMsg = resp.status === 429 ? "För många förfrågningar, vänta lite." :
+                         resp.status === 402 ? "Krediter slut." : "Kunde inte generera bild.";
+          addMessage("assistant", errMsg);
+          messages.push({ role: "assistant", content: errMsg });
+        } else {
+          const data = await resp.json();
+          let content = data.text || "";
+          if (data.images && data.images.length > 0) {
+            const imgUrl = data.images[0].image_url?.url || data.images[0].url;
+            if (imgUrl) {
+              content += `\n\n![Genererad bild](${imgUrl})`;
+            }
+          }
+          if (!content) content = "Kunde inte generera någon bild.";
+          messages.push({ role: "assistant", content });
+          addMessage("assistant", content);
+        }
+        saveCurrentChat();
+      } catch (err) {
+        loadDiv.remove();
+        addMessage("assistant", "Kunde inte ansluta. Kontrollera din internetanslutning.");
+      }
+
+      loading = false;
+      sendBtn.disabled = !inputEl.value.trim();
+      imgBtn.disabled = !inputEl.value.trim();
+      inputEl.focus();
+      scrollDown();
+    }
+
     async function send(text) {
       const content = (text || inputEl.value).trim();
       if (!content || loading) return;
