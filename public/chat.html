@@ -709,7 +709,9 @@
     }
 
     inputEl.addEventListener("input", () => {
-      sendBtn.disabled = !inputEl.value.trim() || loading;
+      const hasText = !!inputEl.value.trim();
+      sendBtn.disabled = !hasText || loading;
+      imgBtn.disabled = !hasText || loading;
     });
 
     function autoGrow(el) {
