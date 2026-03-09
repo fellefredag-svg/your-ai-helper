@@ -414,6 +414,19 @@
     .img-loading { display: flex; align-items: center; gap: 8px; padding: 12px 16px; font-size: 13px; color: var(--text-muted); }
     .img-loading .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .img-wrapper { position: relative; display: inline-block; }
+    .img-wrapper img { display: block; }
+    .img-download {
+      position: absolute; top: 8px; right: 8px;
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(0,0,0,0.55); color: #fff;
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .img-wrapper:hover .img-download { opacity: 1; }
+    .img-download:hover { background: rgba(0,0,0,0.8); }
+    .img-download svg { width: 16px; height: 16px; }
 
     .no-chats { padding: 20px; text-align: center; font-size: 13px; color: var(--text-muted); }
   </style>
@@ -731,7 +744,7 @@
       let html = text
         .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
         .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy">')
+        .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<div class="img-wrapper"><img src="$2" alt="$1" loading="lazy"><button class="img-download" onclick="downloadImage(\'$2\')" title="Ladda ner bild"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div>')
         .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
         .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
@@ -744,6 +757,21 @@
         return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
       }).join('');
       return html;
+    }
+
+    function downloadImage(src) {
+      const a = document.createElement('a');
+      a.download = 'ai-bild-' + Date.now() + '.png';
+      if (src.startsWith('data:')) {
+        a.href = src;
+        a.click();
+      } else {
+        fetch(src).then(r => r.blob()).then(blob => {
+          a.href = URL.createObjectURL(blob);
+          a.click();
+          URL.revokeObjectURL(a.href);
+        }).catch(() => { window.open(src, '_blank'); });
+      }
     }
 
     const userSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
