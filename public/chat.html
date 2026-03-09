@@ -389,7 +389,7 @@
       box-shadow: 0 0 0 2px rgba(14, 154, 131, 0.15);
     }
     .input-inner textarea::placeholder { color: var(--text-muted); }
-    .send-btn, .img-btn {
+    .send-btn, .img-btn, .upload-btn {
       width: 40px; height: 40px;
       flex-shrink: 0;
       border-radius: 12px;
@@ -406,10 +406,30 @@
       background: var(--accent-bg);
       color: var(--accent-fg);
     }
-    .img-btn:hover { opacity: 0.85; }
-    .send-btn:disabled, .img-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .upload-btn {
+      background: var(--accent-bg);
+      color: var(--accent-fg);
+      position: relative;
+    }
+    .upload-btn input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .img-btn:hover, .upload-btn:hover { opacity: 0.85; }
+    .send-btn:disabled, .img-btn:disabled, .upload-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .send-btn:not(:disabled):hover { opacity: 0.85; }
-    .send-btn svg, .img-btn svg { width: 16px; height: 16px; }
+    .send-btn svg, .img-btn svg, .upload-btn svg { width: 16px; height: 16px; }
+    .upload-preview {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px; margin-bottom: 6px;
+      background: var(--accent-bg); border-radius: 10px;
+      font-size: 12px; color: var(--accent-fg);
+      max-width: 640px; margin-left: auto; margin-right: auto;
+    }
+    .upload-preview img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; }
+    .upload-preview .remove-upload {
+      margin-left: auto; background: none; border: none;
+      color: var(--danger); cursor: pointer; font-size: 16px; line-height: 1;
+    }
     .msg-bubble img { max-width: 100%; border-radius: 12px; margin: 8px 0; }
     .img-loading { display: flex; align-items: center; gap: 8px; padding: 12px 16px; font-size: 13px; color: var(--text-muted); }
     .img-loading .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
