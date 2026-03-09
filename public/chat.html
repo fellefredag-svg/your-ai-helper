@@ -661,9 +661,35 @@
     const msgList = document.getElementById("msgList");
     const emptyEl = document.getElementById("empty");
     const msgsContainer = document.getElementById("messages");
-    const chatListEl = document.getElementById("chatList");
-    const noChatsEl = document.getElementById("noChats");
-    const sidebarEl = document.getElementById("sidebar");
+    const uploadPreview = document.getElementById("uploadPreview");
+    const uploadThumb = document.getElementById("uploadThumb");
+    const uploadName = document.getElementById("uploadName");
+    const fileInput = document.getElementById("fileInput");
+    let uploadedImageBase64 = null;
+
+    function handleFileSelect(input) {
+      const file = input.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { alert('Välj en bildfil.'); return; }
+      if (file.size > 10 * 1024 * 1024) { alert('Max 10MB.'); return; }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        uploadedImageBase64 = e.target.result;
+        uploadThumb.src = uploadedImageBase64;
+        uploadName.textContent = file.name;
+        uploadPreview.style.display = 'flex';
+        // Enable generate button when image is uploaded
+        imgBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearUpload() {
+      uploadedImageBase64 = null;
+      uploadPreview.style.display = 'none';
+      fileInput.value = '';
+      imgBtn.disabled = !inputEl.value.trim();
+    }
     const overlayEl = document.getElementById("overlay");
 
     function loadChats() {
