@@ -39,6 +39,87 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    /* Login screen */
+    .login-screen {
+      position: fixed; inset: 0; z-index: 999;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column;
+    }
+    .login-screen.hidden { display: none; }
+    .login-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 32px;
+      width: 360px;
+      max-width: 90vw;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .login-box .login-icon {
+      width: 56px; height: 56px; border-radius: 16px;
+      background: var(--accent-bg); margin: 0 auto 16px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-box .login-icon svg { width: 24px; height: 24px; color: var(--accent-fg); }
+    .login-box h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .login-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+    .login-box input[type="password"] {
+      width: 100%; padding: 10px 14px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--input-bg);
+      font-size: 14px; font-family: inherit; color: var(--text);
+      outline: none; margin-bottom: 8px;
+    }
+    .login-box input[type="password"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(14, 154, 131, 0.15);
+    }
+    .login-box .login-btn {
+      width: 100%; padding: 10px; border-radius: 12px; border: none;
+      background: var(--primary); color: var(--primary-fg);
+      font-size: 14px; font-weight: 600; font-family: inherit;
+      cursor: pointer; margin-top: 8px; transition: opacity 0.15s;
+    }
+    .login-box .login-btn:hover { opacity: 0.9; }
+    .login-box .login-error {
+      color: var(--danger); font-size: 12px; margin-top: 8px; min-height: 18px;
+    }
+    .login-box .login-confirm {
+      width: 100%; padding: 10px 14px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--input-bg);
+      font-size: 14px; font-family: inherit; color: var(--text);
+      outline: none; margin-bottom: 8px;
+    }
+
+    /* Change password modal */
+    .pw-modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.35);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pw-modal-overlay.hidden { display: none; }
+    .pw-modal {
+      background: var(--card); border-radius: 16px; padding: 28px 24px;
+      width: 340px; max-width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+    .pw-modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; text-align: center; }
+    .pw-modal input[type="password"] {
+      width: 100%; padding: 10px 14px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--input-bg);
+      font-size: 14px; font-family: inherit; color: var(--text);
+      outline: none; margin-bottom: 8px;
+    }
+    .pw-modal input:focus { border-color: var(--primary); }
+    .pw-modal-btns { display: flex; gap: 8px; margin-top: 12px; }
+    .pw-modal-btns button {
+      flex: 1; padding: 10px; border-radius: 10px; border: none;
+      font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+    }
+    .pw-modal-btns .pw-cancel { background: var(--input-bg); color: var(--text); }
+    .pw-modal-btns .pw-save { background: var(--primary); color: var(--primary-fg); }
+    .pw-modal .pw-error { color: var(--danger); font-size: 12px; margin-top: 6px; min-height: 16px; }
+
     /* Sidebar */
     .sidebar {
       width: var(--sidebar-w);
@@ -106,6 +187,22 @@
     }
     .chat-item:hover .chat-item-delete { opacity: 1; }
     .chat-item-delete:hover { background: rgba(239,68,68,0.1); }
+
+    /* Sidebar footer */
+    .sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .sidebar-footer-btn {
+      width: 100%; padding: 8px 12px; border-radius: 10px;
+      border: 1px solid var(--border); background: none;
+      color: var(--text-muted); cursor: pointer;
+      font-family: inherit; font-size: 12px;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s;
+    }
+    .sidebar-footer-btn:hover { background: var(--input-bg); }
+    .sidebar-footer-btn svg { width: 14px; height: 14px; }
 
     /* Main */
     .main {
@@ -453,6 +550,36 @@
 </head>
 <body>
 
+  <!-- Login screen -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <div class="login-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <h2 id="loginTitle">Välkommen</h2>
+      <p id="loginDesc">Skapa ett lösenord för att komma igång</p>
+      <input type="password" id="loginPw" placeholder="Lösenord" onkeydown="if(event.key==='Enter')document.getElementById('loginPwConfirm').style.display!=='none'?document.getElementById('loginPwConfirm').focus():handleLogin()">
+      <input type="password" id="loginPwConfirm" placeholder="Bekräfta lösenord" onkeydown="if(event.key==='Enter')handleLogin()">
+      <button class="login-btn" onclick="handleLogin()" id="loginBtn">Skapa & logga in</button>
+      <div class="login-error" id="loginError"></div>
+    </div>
+  </div>
+
+  <!-- Change password modal -->
+  <div class="pw-modal-overlay hidden" id="pwModal">
+    <div class="pw-modal">
+      <h3>🔑 Byt lösenord</h3>
+      <input type="password" id="pwOld" placeholder="Nuvarande lösenord">
+      <input type="password" id="pwNew" placeholder="Nytt lösenord">
+      <input type="password" id="pwNewConfirm" placeholder="Bekräfta nytt lösenord">
+      <div class="pw-error" id="pwError"></div>
+      <div class="pw-modal-btns">
+        <button class="pw-cancel" onclick="closePwModal()">Avbryt</button>
+        <button class="pw-save" onclick="changePassword()">Spara</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Overlay for mobile sidebar -->
   <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
@@ -466,6 +593,16 @@
     </div>
     <div class="chat-list" id="chatList">
       <div class="no-chats" id="noChats">Inga sparade chattar</div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="sidebar-footer-btn" onclick="openPwModal()" style="margin-bottom:6px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Byt lösenord
+      </button>
+      <button class="sidebar-footer-btn" onclick="logout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logga ut
+      </button>
     </div>
   </div>
 
@@ -560,6 +697,117 @@
     const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0aGZrbG1tZmJqdXhucnNoZWprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2Mjg2MDIsImV4cCI6MjA4ODIwNDYwMn0.94AlXJuyzmZqmeGPJ1wsADsopaDGnML0HqgSyV4oHr0";
     const STORAGE_KEY = "ai_chats";
     const THEME_KEY = "ai_theme";
+    const PW_KEY = "ai_pw_hash";
+    const SESSION_KEY = "ai_session";
+
+    // ── Simple hash for local password ──
+    async function hashPw(pw) {
+      const enc = new TextEncoder().encode(pw + "ai-salt-2024");
+      const buf = await crypto.subtle.digest("SHA-256", enc);
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // ── Login logic ──
+    const loginScreen = document.getElementById("loginScreen");
+    const loginPw = document.getElementById("loginPw");
+    const loginPwConfirm = document.getElementById("loginPwConfirm");
+    const loginError = document.getElementById("loginError");
+    const loginTitle = document.getElementById("loginTitle");
+    const loginDesc = document.getElementById("loginDesc");
+    const loginBtn = document.getElementById("loginBtn");
+
+    function checkLoginState() {
+      const hasPassword = !!localStorage.getItem(PW_KEY);
+      const hasSession = !!sessionStorage.getItem(SESSION_KEY);
+
+      if (hasSession) {
+        loginScreen.classList.add("hidden");
+        return;
+      }
+
+      loginScreen.classList.remove("hidden");
+      if (hasPassword) {
+        loginTitle.textContent = "Välkommen tillbaka";
+        loginDesc.textContent = "Ange ditt lösenord för att logga in";
+        loginPwConfirm.style.display = "none";
+        loginBtn.textContent = "Logga in";
+      } else {
+        loginTitle.textContent = "Välkommen";
+        loginDesc.textContent = "Skapa ett lösenord för att komma igång";
+        loginPwConfirm.style.display = "";
+        loginBtn.textContent = "Skapa & logga in";
+      }
+      loginPw.value = "";
+      loginPwConfirm.value = "";
+      loginError.textContent = "";
+      loginPw.focus();
+    }
+
+    async function handleLogin() {
+      const pw = loginPw.value;
+      const hasPassword = !!localStorage.getItem(PW_KEY);
+
+      if (!pw) { loginError.textContent = "Ange ett lösenord."; return; }
+      if (pw.length < 4) { loginError.textContent = "Minst 4 tecken."; return; }
+
+      if (hasPassword) {
+        const hash = await hashPw(pw);
+        if (hash !== localStorage.getItem(PW_KEY)) {
+          loginError.textContent = "Fel lösenord.";
+          return;
+        }
+      } else {
+        const confirm = loginPwConfirm.value;
+        if (pw !== confirm) { loginError.textContent = "Lösenorden matchar inte."; return; }
+        const hash = await hashPw(pw);
+        localStorage.setItem(PW_KEY, hash);
+      }
+
+      sessionStorage.setItem(SESSION_KEY, "1");
+      loginScreen.classList.add("hidden");
+      inputEl.focus();
+    }
+
+    function logout() {
+      sessionStorage.removeItem(SESSION_KEY);
+      checkLoginState();
+    }
+
+    function openPwModal() {
+      document.getElementById("pwModal").classList.remove("hidden");
+      document.getElementById("pwOld").value = "";
+      document.getElementById("pwNew").value = "";
+      document.getElementById("pwNewConfirm").value = "";
+      document.getElementById("pwError").textContent = "";
+      document.getElementById("pwOld").focus();
+      closeSidebar();
+    }
+
+    function closePwModal() {
+      document.getElementById("pwModal").classList.add("hidden");
+    }
+
+    async function changePassword() {
+      const old = document.getElementById("pwOld").value;
+      const newPw = document.getElementById("pwNew").value;
+      const confirm = document.getElementById("pwNewConfirm").value;
+      const errEl = document.getElementById("pwError");
+
+      if (!old || !newPw) { errEl.textContent = "Fyll i alla fält."; return; }
+      if (newPw.length < 4) { errEl.textContent = "Minst 4 tecken."; return; }
+      if (newPw !== confirm) { errEl.textContent = "Nya lösenorden matchar inte."; return; }
+
+      const oldHash = await hashPw(old);
+      if (oldHash !== localStorage.getItem(PW_KEY)) {
+        errEl.textContent = "Fel nuvarande lösenord.";
+        return;
+      }
+
+      const newHash = await hashPw(newPw);
+      localStorage.setItem(PW_KEY, newHash);
+      closePwModal();
+      alert("Lösenordet har ändrats!");
+    }
 
     // ── Themes ──
     const themes = [
@@ -665,6 +913,9 @@
     const uploadThumb = document.getElementById("uploadThumb");
     const uploadName = document.getElementById("uploadName");
     const fileInput = document.getElementById("fileInput");
+    const chatListEl = document.getElementById("chatList");
+    const noChatsEl = document.getElementById("noChats");
+    const sidebarEl = document.getElementById("sidebar");
     let uploadedImageBase64 = null;
 
     function handleFileSelect(input) {
@@ -1039,9 +1290,9 @@
     }
 
     // Init
+    checkLoginState();
     loadChats();
     renderChatList();
-    // Load saved theme
     const savedTheme = localStorage.getItem(THEME_KEY);
     if (savedTheme !== null) applyTheme(parseInt(savedTheme));
     else renderWheel();
