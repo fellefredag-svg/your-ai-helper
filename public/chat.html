@@ -697,6 +697,117 @@
     const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0aGZrbG1tZmJqdXhucnNoZWprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2Mjg2MDIsImV4cCI6MjA4ODIwNDYwMn0.94AlXJuyzmZqmeGPJ1wsADsopaDGnML0HqgSyV4oHr0";
     const STORAGE_KEY = "ai_chats";
     const THEME_KEY = "ai_theme";
+    const PW_KEY = "ai_pw_hash";
+    const SESSION_KEY = "ai_session";
+
+    // ── Simple hash for local password ──
+    async function hashPw(pw) {
+      const enc = new TextEncoder().encode(pw + "ai-salt-2024");
+      const buf = await crypto.subtle.digest("SHA-256", enc);
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // ── Login logic ──
+    const loginScreen = document.getElementById("loginScreen");
+    const loginPw = document.getElementById("loginPw");
+    const loginPwConfirm = document.getElementById("loginPwConfirm");
+    const loginError = document.getElementById("loginError");
+    const loginTitle = document.getElementById("loginTitle");
+    const loginDesc = document.getElementById("loginDesc");
+    const loginBtn = document.getElementById("loginBtn");
+
+    function checkLoginState() {
+      const hasPassword = !!localStorage.getItem(PW_KEY);
+      const hasSession = !!sessionStorage.getItem(SESSION_KEY);
+
+      if (hasSession) {
+        loginScreen.classList.add("hidden");
+        return;
+      }
+
+      loginScreen.classList.remove("hidden");
+      if (hasPassword) {
+        loginTitle.textContent = "Välkommen tillbaka";
+        loginDesc.textContent = "Ange ditt lösenord för att logga in";
+        loginPwConfirm.style.display = "none";
+        loginBtn.textContent = "Logga in";
+      } else {
+        loginTitle.textContent = "Välkommen";
+        loginDesc.textContent = "Skapa ett lösenord för att komma igång";
+        loginPwConfirm.style.display = "";
+        loginBtn.textContent = "Skapa & logga in";
+      }
+      loginPw.value = "";
+      loginPwConfirm.value = "";
+      loginError.textContent = "";
+      loginPw.focus();
+    }
+
+    async function handleLogin() {
+      const pw = loginPw.value;
+      const hasPassword = !!localStorage.getItem(PW_KEY);
+
+      if (!pw) { loginError.textContent = "Ange ett lösenord."; return; }
+      if (pw.length < 4) { loginError.textContent = "Minst 4 tecken."; return; }
+
+      if (hasPassword) {
+        const hash = await hashPw(pw);
+        if (hash !== localStorage.getItem(PW_KEY)) {
+          loginError.textContent = "Fel lösenord.";
+          return;
+        }
+      } else {
+        const confirm = loginPwConfirm.value;
+        if (pw !== confirm) { loginError.textContent = "Lösenorden matchar inte."; return; }
+        const hash = await hashPw(pw);
+        localStorage.setItem(PW_KEY, hash);
+      }
+
+      sessionStorage.setItem(SESSION_KEY, "1");
+      loginScreen.classList.add("hidden");
+      inputEl.focus();
+    }
+
+    function logout() {
+      sessionStorage.removeItem(SESSION_KEY);
+      checkLoginState();
+    }
+
+    function openPwModal() {
+      document.getElementById("pwModal").classList.remove("hidden");
+      document.getElementById("pwOld").value = "";
+      document.getElementById("pwNew").value = "";
+      document.getElementById("pwNewConfirm").value = "";
+      document.getElementById("pwError").textContent = "";
+      document.getElementById("pwOld").focus();
+      closeSidebar();
+    }
+
+    function closePwModal() {
+      document.getElementById("pwModal").classList.add("hidden");
+    }
+
+    async function changePassword() {
+      const old = document.getElementById("pwOld").value;
+      const newPw = document.getElementById("pwNew").value;
+      const confirm = document.getElementById("pwNewConfirm").value;
+      const errEl = document.getElementById("pwError");
+
+      if (!old || !newPw) { errEl.textContent = "Fyll i alla fält."; return; }
+      if (newPw.length < 4) { errEl.textContent = "Minst 4 tecken."; return; }
+      if (newPw !== confirm) { errEl.textContent = "Nya lösenorden matchar inte."; return; }
+
+      const oldHash = await hashPw(old);
+      if (oldHash !== localStorage.getItem(PW_KEY)) {
+        errEl.textContent = "Fel nuvarande lösenord.";
+        return;
+      }
+
+      const newHash = await hashPw(newPw);
+      localStorage.setItem(PW_KEY, newHash);
+      closePwModal();
+      alert("Lösenordet har ändrats!");
+    }
 
     // ── Themes ──
     const themes = [
