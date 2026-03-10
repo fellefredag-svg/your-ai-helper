@@ -1290,9 +1290,9 @@
     }
 
     // Init
+    checkLoginState();
     loadChats();
     renderChatList();
-    // Load saved theme
     const savedTheme = localStorage.getItem(THEME_KEY);
     if (savedTheme !== null) applyTheme(parseInt(savedTheme));
     else renderWheel();
