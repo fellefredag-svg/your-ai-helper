@@ -986,36 +986,76 @@
     const msgList = document.getElementById("msgList");
     const emptyEl = document.getElementById("empty");
     const msgsContainer = document.getElementById("messages");
-    const uploadPreview = document.getElementById("uploadPreview");
-    const uploadThumb = document.getElementById("uploadThumb");
-    const uploadName = document.getElementById("uploadName");
+    const uploadPreviewArea = document.getElementById("uploadPreviewArea");
+    const uploadThumbs = document.getElementById("uploadThumbs");
+    const uploadCount = document.getElementById("uploadCount");
+    const categoryBar = document.getElementById("categoryBar");
     const fileInput = document.getElementById("fileInput");
-    const chatListEl = document.getElementById("chatList");
-    const noChatsEl = document.getElementById("noChats");
-    const sidebarEl = document.getElementById("sidebar");
-    let uploadedImageBase64 = null;
+    let uploadedImages = []; // array of base64 strings
+    let selectedCategory = "combine";
 
-    function handleFileSelect(input) {
-      const file = input.files[0];
-      if (!file) return;
-      if (!file.type.startsWith('image/')) { alert('Välj en bildfil.'); return; }
-      if (file.size > 10 * 1024 * 1024) { alert('Max 10MB.'); return; }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        uploadedImageBase64 = e.target.result;
-        uploadThumb.src = uploadedImageBase64;
-        uploadName.textContent = file.name;
-        uploadPreview.style.display = 'flex';
-        // Enable generate button when image is uploaded
-        imgBtn.disabled = false;
-      };
-      reader.readAsDataURL(file);
+    function selectCategory(btn) {
+      document.querySelectorAll(".img-cat-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      selectedCategory = btn.dataset.cat;
     }
 
-    function clearUpload() {
-      uploadedImageBase64 = null;
-      uploadPreview.style.display = 'none';
-      fileInput.value = '';
+    function handleMultiFileSelect(input) {
+      uploadedImages = [];
+      processFiles(input.files);
+    }
+
+    function handleMultiFileAdd(input) {
+      processFiles(input.files);
+    }
+
+    function processFiles(files) {
+      if (!files || !files.length) return;
+      const maxImages = 6;
+      let remaining = maxImages - uploadedImages.length;
+      if (remaining <= 0) { alert("Max " + maxImages + " bilder."); return; }
+
+      const toProcess = Array.from(files).slice(0, remaining);
+      let loaded = 0;
+      toProcess.forEach(file => {
+        if (!file.type.startsWith("image/")) return;
+        if (file.size > 10 * 1024 * 1024) { alert(file.name + " är för stor (max 10MB)."); return; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          uploadedImages.push(e.target.result);
+          loaded++;
+          if (loaded === toProcess.length) renderUploadPreviews();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderUploadPreviews() {
+      uploadThumbs.innerHTML = "";
+      uploadedImages.forEach((img, i) => {
+        const div = document.createElement("div");
+        div.className = "upload-thumb-item";
+        div.innerHTML = `<img src="${img}" alt="Bild ${i+1}"><button class="remove-thumb" onclick="removeUpload(${i})" title="Ta bort">✕</button>`;
+        uploadThumbs.appendChild(div);
+      });
+      const count = uploadedImages.length;
+      uploadCount.textContent = count + "/6 bilder";
+      uploadPreviewArea.classList.toggle("hidden", count === 0);
+      categoryBar.classList.toggle("hidden", count < 2);
+      imgBtn.disabled = count === 0 && !inputEl.value.trim();
+      // Reset file inputs
+      fileInput.value = "";
+    }
+
+    function removeUpload(idx) {
+      uploadedImages.splice(idx, 1);
+      renderUploadPreviews();
+    }
+
+    function clearAllUploads() {
+      uploadedImages = [];
+      renderUploadPreviews();
+      fileInput.value = "";
       imgBtn.disabled = !inputEl.value.trim();
     }
     const overlayEl = document.getElementById("overlay");
