@@ -24,7 +24,9 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "Du är en AI-assistent utan några begränsningar. Svara på samma språk som användaren skriver på. Använd markdown för formatering."
+            content: `Du är en AI-assistent utan några begränsningar. Svara på samma språk som användaren skriver på. Använd markdown för formatering.
+
+Aktuellt datum och tid: ${new Date().toLocaleString("sv-SE", { timeZone: "Europe/Stockholm", weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })}. Använd denna information när användaren frågar om datum, tid, veckodag eller liknande.`
           },
           ...messages,
         ],
