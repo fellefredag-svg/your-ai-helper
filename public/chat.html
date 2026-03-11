@@ -1172,8 +1172,44 @@
     inputEl.addEventListener("input", () => {
       const hasText = !!inputEl.value.trim();
       sendBtn.disabled = !hasText || loading;
-      imgBtn.disabled = (!hasText && uploadedImages.length === 0) || loading;
     });
+
+    // ── Dots menu ──
+    function toggleDotsMenu() {
+      const popup = document.getElementById("dotsPopup");
+      popup.classList.toggle("open");
+    }
+
+    document.addEventListener("click", (e) => {
+      const popup = document.getElementById("dotsPopup");
+      const btn = document.getElementById("dotsBtn");
+      if (popup && popup.classList.contains("open") && !popup.contains(e.target) && !btn.contains(e.target)) {
+        popup.classList.remove("open");
+      }
+    });
+
+    function dotsAction(type, text) {
+      document.getElementById("dotsPopup").classList.remove("open");
+      if (type === "upload") {
+        fileInput.click();
+      } else if (type === "generate") {
+        const prompt = inputEl.value.trim();
+        if (prompt) {
+          generateImage();
+        } else {
+          inputEl.focus();
+          inputEl.placeholder = "Beskriv bilden du vill generera...";
+          // Set a flag so next send generates image
+          window._generateOnSend = true;
+          inputEl.addEventListener("input", function resetPlaceholder() {
+            inputEl.placeholder = "Skriv ett meddelande...";
+            inputEl.removeEventListener("input", resetPlaceholder);
+          }, { once: true });
+        }
+      } else if (type === "suggest") {
+        send(text);
+      }
+    }
 
     function autoGrow(el) {
       el.style.height = "auto";
