@@ -515,18 +515,62 @@
     .send-btn:disabled, .img-btn:disabled, .upload-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .send-btn:not(:disabled):hover { opacity: 0.85; }
     .send-btn svg, .img-btn svg, .upload-btn svg { width: 16px; height: 16px; }
-    .upload-preview {
-      display: flex; align-items: center; gap: 8px;
-      padding: 6px 12px; margin-bottom: 6px;
-      background: var(--accent-bg); border-radius: 10px;
-      font-size: 12px; color: var(--accent-fg);
+
+    /* Multi-image upload preview */
+    .upload-preview-area {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      padding: 8px 12px; margin-bottom: 6px;
+      background: var(--accent-bg); border-radius: 12px;
+      max-width: 640px; margin-left: auto; margin-right: auto;
+      align-items: center;
+    }
+    .upload-preview-area.hidden { display: none; }
+    .upload-thumb-item {
+      position: relative; width: 56px; height: 56px;
+      border-radius: 8px; overflow: hidden;
+      border: 2px solid var(--border);
+    }
+    .upload-thumb-item img { width: 100%; height: 100%; object-fit: cover; }
+    .upload-thumb-item .remove-thumb {
+      position: absolute; top: 2px; right: 2px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: rgba(0,0,0,0.6); color: #fff;
+      border: none; cursor: pointer; font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+      line-height: 1;
+    }
+    .upload-thumb-item .remove-thumb:hover { background: var(--danger); }
+    .upload-add-more {
+      width: 56px; height: 56px; border-radius: 8px;
+      border: 2px dashed var(--border); background: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 22px; transition: border-color 0.15s;
+      position: relative;
+    }
+    .upload-add-more:hover { border-color: var(--primary); color: var(--primary); }
+    .upload-add-more input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-count {
+      font-size: 12px; color: var(--text-muted); margin-left: auto;
+    }
+
+    /* Image category selector */
+    .img-category-bar {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      padding: 8px 12px; margin-bottom: 4px;
       max-width: 640px; margin-left: auto; margin-right: auto;
     }
-    .upload-preview img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; }
-    .upload-preview .remove-upload {
-      margin-left: auto; background: none; border: none;
-      color: var(--danger); cursor: pointer; font-size: 16px; line-height: 1;
+    .img-category-bar.hidden { display: none; }
+    .img-cat-btn {
+      padding: 6px 14px; border-radius: 20px;
+      border: 1px solid var(--border); background: var(--card);
+      color: var(--text); font-size: 12px; font-family: inherit;
+      font-weight: 500; cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; gap: 5px;
     }
+    .img-cat-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .img-cat-btn.active { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+    .img-cat-btn .cat-icon { font-size: 14px; }
+
     .msg-bubble img { max-width: 100%; border-radius: 12px; margin: 8px 0; }
     .img-loading { display: flex; align-items: center; gap: 8px; padding: 12px 16px; font-size: 13px; color: var(--text-muted); }
     .img-loading .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
