@@ -515,18 +515,62 @@
     .send-btn:disabled, .img-btn:disabled, .upload-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .send-btn:not(:disabled):hover { opacity: 0.85; }
     .send-btn svg, .img-btn svg, .upload-btn svg { width: 16px; height: 16px; }
-    .upload-preview {
-      display: flex; align-items: center; gap: 8px;
-      padding: 6px 12px; margin-bottom: 6px;
-      background: var(--accent-bg); border-radius: 10px;
-      font-size: 12px; color: var(--accent-fg);
+
+    /* Multi-image upload preview */
+    .upload-preview-area {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      padding: 8px 12px; margin-bottom: 6px;
+      background: var(--accent-bg); border-radius: 12px;
+      max-width: 640px; margin-left: auto; margin-right: auto;
+      align-items: center;
+    }
+    .upload-preview-area.hidden { display: none; }
+    .upload-thumb-item {
+      position: relative; width: 56px; height: 56px;
+      border-radius: 8px; overflow: hidden;
+      border: 2px solid var(--border);
+    }
+    .upload-thumb-item img { width: 100%; height: 100%; object-fit: cover; }
+    .upload-thumb-item .remove-thumb {
+      position: absolute; top: 2px; right: 2px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: rgba(0,0,0,0.6); color: #fff;
+      border: none; cursor: pointer; font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+      line-height: 1;
+    }
+    .upload-thumb-item .remove-thumb:hover { background: var(--danger); }
+    .upload-add-more {
+      width: 56px; height: 56px; border-radius: 8px;
+      border: 2px dashed var(--border); background: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 22px; transition: border-color 0.15s;
+      position: relative;
+    }
+    .upload-add-more:hover { border-color: var(--primary); color: var(--primary); }
+    .upload-add-more input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-count {
+      font-size: 12px; color: var(--text-muted); margin-left: auto;
+    }
+
+    /* Image category selector */
+    .img-category-bar {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      padding: 8px 12px; margin-bottom: 4px;
       max-width: 640px; margin-left: auto; margin-right: auto;
     }
-    .upload-preview img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; }
-    .upload-preview .remove-upload {
-      margin-left: auto; background: none; border: none;
-      color: var(--danger); cursor: pointer; font-size: 16px; line-height: 1;
+    .img-category-bar.hidden { display: none; }
+    .img-cat-btn {
+      padding: 6px 14px; border-radius: 20px;
+      border: 1px solid var(--border); background: var(--card);
+      color: var(--text); font-size: 12px; font-family: inherit;
+      font-weight: 500; cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; gap: 5px;
     }
+    .img-cat-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .img-cat-btn.active { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+    .img-cat-btn .cat-icon { font-size: 14px; }
+
     .msg-bubble img { max-width: 100%; border-radius: 12px; margin: 8px 0; }
     .img-loading { display: flex; align-items: center; gap: 8px; padding: 12px 16px; font-size: 13px; color: var(--text-muted); }
     .img-loading .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -664,11 +708,44 @@
 
     <!-- Input -->
     <div class="input-area">
-      <div class="upload-preview" id="uploadPreview" style="display:none;">
-        <img id="uploadThumb" src="" alt="Uppladdad bild">
-        <span id="uploadName">bild.jpg</span>
-        <button class="remove-upload" onclick="clearUpload()" title="Ta bort">✕</button>
+      <!-- Category bar (shown when images uploaded) -->
+      <div class="img-category-bar hidden" id="categoryBar">
+        <button class="img-cat-btn active" data-cat="combine" onclick="selectCategory(this)"><span class="cat-icon">🧩</span> Kombinera</button>
+        <button class="img-cat-btn" data-cat="collage" onclick="selectCategory(this)"><span class="cat-icon">🎨</span> Collage</button>
+        <button class="img-cat-btn" data-cat="style" onclick="selectCategory(this)"><span class="cat-icon">✨</span> Stilöverföring</button>
+        <button class="img-cat-btn" data-cat="morph" onclick="selectCategory(this)"><span class="cat-icon">🔄</span> Morfa/Blanda</button>
+        <button class="img-cat-btn" data-cat="edit" onclick="selectCategory(this)"><span class="cat-icon">✏️</span> Redigera</button>
       </div>
+      <!-- Multi-image preview -->
+      <div class="upload-preview-area hidden" id="uploadPreviewArea">
+        <div id="uploadThumbs"></div>
+        <button class="upload-add-more" title="Lägg till fler bilder">
+          +
+          <input type="file" accept="image/*" multiple onchange="handleMultiFileAdd(this)">
+        </button>
+        <span class="upload-count" id="uploadCount"></span>
+        <button class="remove-upload" onclick="clearAllUploads()" title="Ta bort alla" style="margin-left:8px;background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;">✕</button>
+      </div>
+      <div class="input-inner">
+        <textarea id="input" rows="1" placeholder="Skriv ett meddelande..." onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
+        <button class="upload-btn" id="uploadBtn" title="Ladda upp bilder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <input type="file" id="fileInput" accept="image/*" multiple onchange="handleMultiFileSelect(this)">
+        </button>
+        <button class="img-btn" id="imgBtn" onclick="generateImage()" disabled title="Generera / bearbeta bild">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <button class="send-btn" id="sendBtn" onclick="send()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>
+          </svg>
+        </button>
+      </div>
+    </div>
       <div class="input-inner">
         <textarea id="input" rows="1" placeholder="Skriv ett meddelande..." onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
         <button class="upload-btn" id="uploadBtn" title="Ladda upp en bild att redigera">
@@ -909,36 +986,76 @@
     const msgList = document.getElementById("msgList");
     const emptyEl = document.getElementById("empty");
     const msgsContainer = document.getElementById("messages");
-    const uploadPreview = document.getElementById("uploadPreview");
-    const uploadThumb = document.getElementById("uploadThumb");
-    const uploadName = document.getElementById("uploadName");
+    const uploadPreviewArea = document.getElementById("uploadPreviewArea");
+    const uploadThumbs = document.getElementById("uploadThumbs");
+    const uploadCount = document.getElementById("uploadCount");
+    const categoryBar = document.getElementById("categoryBar");
     const fileInput = document.getElementById("fileInput");
-    const chatListEl = document.getElementById("chatList");
-    const noChatsEl = document.getElementById("noChats");
-    const sidebarEl = document.getElementById("sidebar");
-    let uploadedImageBase64 = null;
+    let uploadedImages = []; // array of base64 strings
+    let selectedCategory = "combine";
 
-    function handleFileSelect(input) {
-      const file = input.files[0];
-      if (!file) return;
-      if (!file.type.startsWith('image/')) { alert('Välj en bildfil.'); return; }
-      if (file.size > 10 * 1024 * 1024) { alert('Max 10MB.'); return; }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        uploadedImageBase64 = e.target.result;
-        uploadThumb.src = uploadedImageBase64;
-        uploadName.textContent = file.name;
-        uploadPreview.style.display = 'flex';
-        // Enable generate button when image is uploaded
-        imgBtn.disabled = false;
-      };
-      reader.readAsDataURL(file);
+    function selectCategory(btn) {
+      document.querySelectorAll(".img-cat-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      selectedCategory = btn.dataset.cat;
     }
 
-    function clearUpload() {
-      uploadedImageBase64 = null;
-      uploadPreview.style.display = 'none';
-      fileInput.value = '';
+    function handleMultiFileSelect(input) {
+      uploadedImages = [];
+      processFiles(input.files);
+    }
+
+    function handleMultiFileAdd(input) {
+      processFiles(input.files);
+    }
+
+    function processFiles(files) {
+      if (!files || !files.length) return;
+      const maxImages = 6;
+      let remaining = maxImages - uploadedImages.length;
+      if (remaining <= 0) { alert("Max " + maxImages + " bilder."); return; }
+
+      const toProcess = Array.from(files).slice(0, remaining);
+      let loaded = 0;
+      toProcess.forEach(file => {
+        if (!file.type.startsWith("image/")) return;
+        if (file.size > 10 * 1024 * 1024) { alert(file.name + " är för stor (max 10MB)."); return; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          uploadedImages.push(e.target.result);
+          loaded++;
+          if (loaded === toProcess.length) renderUploadPreviews();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderUploadPreviews() {
+      uploadThumbs.innerHTML = "";
+      uploadedImages.forEach((img, i) => {
+        const div = document.createElement("div");
+        div.className = "upload-thumb-item";
+        div.innerHTML = `<img src="${img}" alt="Bild ${i+1}"><button class="remove-thumb" onclick="removeUpload(${i})" title="Ta bort">✕</button>`;
+        uploadThumbs.appendChild(div);
+      });
+      const count = uploadedImages.length;
+      uploadCount.textContent = count + "/6 bilder";
+      uploadPreviewArea.classList.toggle("hidden", count === 0);
+      categoryBar.classList.toggle("hidden", count < 2);
+      imgBtn.disabled = count === 0 && !inputEl.value.trim();
+      // Reset file inputs
+      fileInput.value = "";
+    }
+
+    function removeUpload(idx) {
+      uploadedImages.splice(idx, 1);
+      renderUploadPreviews();
+    }
+
+    function clearAllUploads() {
+      uploadedImages = [];
+      renderUploadPreviews();
+      fileInput.value = "";
       imgBtn.disabled = !inputEl.value.trim();
     }
     const overlayEl = document.getElementById("overlay");
@@ -1032,7 +1149,7 @@
     inputEl.addEventListener("input", () => {
       const hasText = !!inputEl.value.trim();
       sendBtn.disabled = !hasText || loading;
-      imgBtn.disabled = (!hasText && !uploadedImageBase64) || loading;
+      imgBtn.disabled = (!hasText && uploadedImages.length === 0) || loading;
     });
 
     function autoGrow(el) {
@@ -1119,19 +1236,24 @@
 
     async function generateImage() {
       const prompt = inputEl.value.trim();
-      const hasImage = !!uploadedImageBase64;
-      if (!prompt && !hasImage) return;
+      const hasImages = uploadedImages.length > 0;
+      if (!prompt && !hasImages) return;
       if (loading) return;
 
-      const imageData = uploadedImageBase64;
-      const displayText = hasImage ? "🖼️✏️ " + (prompt || "Redigera bild") : "🖼️ " + prompt;
+      const imagesCopy = [...uploadedImages];
+      const catLabels = { combine: "Kombinera", collage: "Collage", style: "Stilöverföring", morph: "Morfa", edit: "Redigera", generate: "Generera" };
+      const cat = hasImages && imagesCopy.length > 1 ? selectedCategory : (hasImages ? "edit" : "generate");
+      const catLabel = catLabels[cat] || cat;
+      const displayText = hasImages
+        ? `🖼️ [${catLabel}] ${imagesCopy.length} bild(er)` + (prompt ? " — " + prompt : "")
+        : "🖼️ " + prompt;
 
       inputEl.value = "";
       inputEl.style.height = "auto";
       sendBtn.disabled = true;
       imgBtn.disabled = true;
       loading = true;
-      clearUpload();
+      clearAllUploads();
 
       emptyEl.style.display = "none";
       msgList.style.display = "flex";
@@ -1143,15 +1265,16 @@
       // Show loading
       const loadDiv = document.createElement("div");
       loadDiv.className = "msg assistant";
+      const loadingText = hasImages ? "Bearbetar bilder..." : "Genererar bild...";
       loadDiv.innerHTML = `
         <div class="msg-avatar" style="background:var(--accent-bg);color:var(--accent-fg)">${botSvg}</div>
-        <div class="msg-bubble"><div class="img-loading"><div class="spinner"></div> ${hasImage ? 'Redigerar bild...' : 'Genererar bild...'}</div></div>
+        <div class="msg-bubble"><div class="img-loading"><div class="spinner"></div> ${loadingText}</div></div>
       `;
       msgList.appendChild(loadDiv);
       scrollDown();
 
-      const body = { prompt: prompt || "Transform this image creatively" };
-      if (imageData) body.image = imageData;
+      const body = { prompt: prompt || "Transform these images creatively", category: cat };
+      if (imagesCopy.length > 0) body.images = imagesCopy;
 
       try {
         const resp = await fetch(IMAGE_URL, {
@@ -1174,10 +1297,10 @@
           const data = await resp.json();
           let content = data.text || "";
           if (data.images && data.images.length > 0) {
-            const imgUrl = data.images[0].image_url?.url || data.images[0].url;
-            if (imgUrl) {
-              content += `\n\n![Genererad bild](${imgUrl})`;
-            }
+            data.images.forEach((img, i) => {
+              const imgUrl = img.image_url?.url || img.url;
+              if (imgUrl) content += `\n\n![Resultat ${i+1}](${imgUrl})`;
+            });
           }
           if (!content) content = "Kunde inte generera någon bild.";
           messages.push({ role: "assistant", content });
