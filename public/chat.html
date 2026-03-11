@@ -1211,7 +1211,17 @@
     }
 
     function handleKey(e) {
-      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (window._generateOnSend && inputEl.value.trim()) {
+          window._generateOnSend = false;
+          generateImage();
+        } else if (uploadedImages.length > 0) {
+          generateImage();
+        } else {
+          send();
+        }
+      }
     }
 
     function scrollDown() {
