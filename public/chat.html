@@ -708,11 +708,44 @@
 
     <!-- Input -->
     <div class="input-area">
-      <div class="upload-preview" id="uploadPreview" style="display:none;">
-        <img id="uploadThumb" src="" alt="Uppladdad bild">
-        <span id="uploadName">bild.jpg</span>
-        <button class="remove-upload" onclick="clearUpload()" title="Ta bort">✕</button>
+      <!-- Category bar (shown when images uploaded) -->
+      <div class="img-category-bar hidden" id="categoryBar">
+        <button class="img-cat-btn active" data-cat="combine" onclick="selectCategory(this)"><span class="cat-icon">🧩</span> Kombinera</button>
+        <button class="img-cat-btn" data-cat="collage" onclick="selectCategory(this)"><span class="cat-icon">🎨</span> Collage</button>
+        <button class="img-cat-btn" data-cat="style" onclick="selectCategory(this)"><span class="cat-icon">✨</span> Stilöverföring</button>
+        <button class="img-cat-btn" data-cat="morph" onclick="selectCategory(this)"><span class="cat-icon">🔄</span> Morfa/Blanda</button>
+        <button class="img-cat-btn" data-cat="edit" onclick="selectCategory(this)"><span class="cat-icon">✏️</span> Redigera</button>
       </div>
+      <!-- Multi-image preview -->
+      <div class="upload-preview-area hidden" id="uploadPreviewArea">
+        <div id="uploadThumbs"></div>
+        <button class="upload-add-more" title="Lägg till fler bilder">
+          +
+          <input type="file" accept="image/*" multiple onchange="handleMultiFileAdd(this)">
+        </button>
+        <span class="upload-count" id="uploadCount"></span>
+        <button class="remove-upload" onclick="clearAllUploads()" title="Ta bort alla" style="margin-left:8px;background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;">✕</button>
+      </div>
+      <div class="input-inner">
+        <textarea id="input" rows="1" placeholder="Skriv ett meddelande..." onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
+        <button class="upload-btn" id="uploadBtn" title="Ladda upp bilder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <input type="file" id="fileInput" accept="image/*" multiple onchange="handleMultiFileSelect(this)">
+        </button>
+        <button class="img-btn" id="imgBtn" onclick="generateImage()" disabled title="Generera / bearbeta bild">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <button class="send-btn" id="sendBtn" onclick="send()" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>
+          </svg>
+        </button>
+      </div>
+    </div>
       <div class="input-inner">
         <textarea id="input" rows="1" placeholder="Skriv ett meddelande..." onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
         <button class="upload-btn" id="uploadBtn" title="Ladda upp en bild att redigera">
