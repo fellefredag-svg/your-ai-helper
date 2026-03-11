@@ -376,6 +376,41 @@
       border-color: var(--primary);
     }
 
+    /* Three-dot menu */
+    .dots-menu-wrapper { position: relative; }
+    .dots-btn {
+      width: 40px; height: 40px; flex-shrink: 0;
+      border-radius: 12px; border: none;
+      background: var(--accent-bg); color: var(--accent-fg);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.15s;
+    }
+    .dots-btn:hover { opacity: 0.85; }
+    .dots-btn svg { width: 18px; height: 18px; }
+    .dots-popup {
+      display: none;
+      position: absolute; bottom: 48px; right: 0;
+      z-index: 60;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 8px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      width: 260px;
+      animation: panelIn 0.15s ease-out;
+    }
+    .dots-popup.open { display: block; }
+    .dots-popup-item {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; padding: 10px 14px; border-radius: 10px;
+      border: none; background: none; cursor: pointer;
+      font-family: inherit; font-size: 13px; color: var(--text);
+      text-align: left; transition: background 0.12s;
+    }
+    .dots-popup-item:hover { background: var(--accent-bg); }
+    .dots-popup-item .dot-icon { font-size: 16px; flex-shrink: 0; }
+    .dots-popup-divider {
+      height: 1px; background: var(--border); margin: 4px 8px;
+    }
+
     /* Chat message */
     .msg { display: flex; gap: 10px; }
     .msg.user { flex-direction: row-reverse; }
@@ -694,13 +729,7 @@
         </div>
         <div>
           <h2>Hej! 👋</h2>
-          <p>Jag är din AI-assistent. Ställ en fråga eller välj ett förslag nedan.</p>
-        </div>
-        <div class="suggestions">
-          <button class="suggestion-btn" onclick="send('Förklara hur internet fungerar')">Förklara hur internet fungerar</button>
-          <button class="suggestion-btn" onclick="send('Ge mig tips för att plugga effektivt')">Ge mig tips för att plugga effektivt</button>
-          <button class="suggestion-btn" onclick="send('Skriv en kort dikt om programmering')">Skriv en kort dikt om programmering</button>
-          <button class="suggestion-btn" onclick="send('Vad är artificiell intelligens?')">Vad är artificiell intelligens?</button>
+          <p>Jag är din AI-assistent. Skriv ett meddelande eller tryck på ⋮ för fler alternativ.</p>
         </div>
       </div>
       <div class="messages-inner" id="msgList" style="display:none;"></div>
@@ -728,38 +757,23 @@
       </div>
       <div class="input-inner">
         <textarea id="input" rows="1" placeholder="Skriv ett meddelande..." onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
-        <button class="upload-btn" id="uploadBtn" title="Ladda upp bilder">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-          </svg>
-          <input type="file" id="fileInput" accept="image/*" multiple onchange="handleMultiFileSelect(this)">
-        </button>
-        <button class="img-btn" id="imgBtn" onclick="generateImage()" disabled title="Generera / bearbeta bild">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-        </button>
-        <button class="send-btn" id="sendBtn" onclick="send()" disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-      <div class="input-inner">
-        <textarea id="input" rows="1" placeholder="Skriv ett meddelande..." onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
-        <button class="upload-btn" id="uploadBtn" title="Ladda upp en bild att redigera">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-          </svg>
-          <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(this)">
-        </button>
-        <button class="img-btn" id="imgBtn" onclick="generateImage()" disabled title="Generera bild från texten">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-        </button>
-        <button class="send-btn" id="sendBtn" onclick="send()" disabled>
+        <div class="dots-menu-wrapper">
+          <button class="dots-btn" id="dotsBtn" onclick="toggleDotsMenu()" title="Fler alternativ">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+            </svg>
+          </button>
+          <div class="dots-popup" id="dotsPopup">
+            <button class="dots-popup-item" onclick="dotsAction('upload')"><span class="dot-icon">📷</span> Ladda upp bilder</button>
+            <button class="dots-popup-item" onclick="dotsAction('generate')"><span class="dot-icon">🖼️</span> Generera bild från text</button>
+            <div class="dots-popup-divider"></div>
+            <button class="dots-popup-item" onclick="dotsAction('suggest','Förklara hur internet fungerar')"><span class="dot-icon">🌐</span> Förklara hur internet fungerar</button>
+            <button class="dots-popup-item" onclick="dotsAction('suggest','Ge mig tips för att plugga effektivt')"><span class="dot-icon">📚</span> Tips för att plugga</button>
+            <button class="dots-popup-item" onclick="dotsAction('suggest','Skriv en kort dikt om programmering')"><span class="dot-icon">✍️</span> Skriv en dikt</button>
+            <button class="dots-popup-item" onclick="dotsAction('suggest','Vad är artificiell intelligens?')"><span class="dot-icon">🤖</span> Vad är AI?</button>
+          </div>
+        </div>
+        <button class="send-btn" id="sendBtn" onclick="uploadedImages.length > 0 ? generateImage() : send()" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>
           </svg>
@@ -767,6 +781,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Hidden file input for dots menu -->
+  <input type="file" id="fileInput" accept="image/*" multiple onchange="handleMultiFileSelect(this)" style="display:none;">
 
   <script>
     const CHAT_URL = "https://uthfklmmfbjuxnrshejk.supabase.co/functions/v1/chat";
@@ -982,7 +999,7 @@
 
     const inputEl = document.getElementById("input");
     const sendBtn = document.getElementById("sendBtn");
-    const imgBtn = document.getElementById("imgBtn");
+    const imgBtn = { disabled: false }; // placeholder since button removed
     const msgList = document.getElementById("msgList");
     const emptyEl = document.getElementById("empty");
     const msgsContainer = document.getElementById("messages");
@@ -1149,8 +1166,44 @@
     inputEl.addEventListener("input", () => {
       const hasText = !!inputEl.value.trim();
       sendBtn.disabled = !hasText || loading;
-      imgBtn.disabled = (!hasText && uploadedImages.length === 0) || loading;
     });
+
+    // ── Dots menu ──
+    function toggleDotsMenu() {
+      const popup = document.getElementById("dotsPopup");
+      popup.classList.toggle("open");
+    }
+
+    document.addEventListener("click", (e) => {
+      const popup = document.getElementById("dotsPopup");
+      const btn = document.getElementById("dotsBtn");
+      if (popup && popup.classList.contains("open") && !popup.contains(e.target) && !btn.contains(e.target)) {
+        popup.classList.remove("open");
+      }
+    });
+
+    function dotsAction(type, text) {
+      document.getElementById("dotsPopup").classList.remove("open");
+      if (type === "upload") {
+        fileInput.click();
+      } else if (type === "generate") {
+        const prompt = inputEl.value.trim();
+        if (prompt) {
+          generateImage();
+        } else {
+          inputEl.focus();
+          inputEl.placeholder = "Beskriv bilden du vill generera...";
+          // Set a flag so next send generates image
+          window._generateOnSend = true;
+          inputEl.addEventListener("input", function resetPlaceholder() {
+            inputEl.placeholder = "Skriv ett meddelande...";
+            inputEl.removeEventListener("input", resetPlaceholder);
+          }, { once: true });
+        }
+      } else if (type === "suggest") {
+        send(text);
+      }
+    }
 
     function autoGrow(el) {
       el.style.height = "auto";
@@ -1158,7 +1211,17 @@
     }
 
     function handleKey(e) {
-      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (window._generateOnSend && inputEl.value.trim()) {
+          window._generateOnSend = false;
+          generateImage();
+        } else if (uploadedImages.length > 0) {
+          generateImage();
+        } else {
+          send();
+        }
+      }
     }
 
     function scrollDown() {
