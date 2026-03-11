@@ -1236,19 +1236,24 @@
 
     async function generateImage() {
       const prompt = inputEl.value.trim();
-      const hasImage = !!uploadedImageBase64;
-      if (!prompt && !hasImage) return;
+      const hasImages = uploadedImages.length > 0;
+      if (!prompt && !hasImages) return;
       if (loading) return;
 
-      const imageData = uploadedImageBase64;
-      const displayText = hasImage ? "🖼️✏️ " + (prompt || "Redigera bild") : "🖼️ " + prompt;
+      const imagesCopy = [...uploadedImages];
+      const catLabels = { combine: "Kombinera", collage: "Collage", style: "Stilöverföring", morph: "Morfa", edit: "Redigera", generate: "Generera" };
+      const cat = hasImages && imagesCopy.length > 1 ? selectedCategory : (hasImages ? "edit" : "generate");
+      const catLabel = catLabels[cat] || cat;
+      const displayText = hasImages
+        ? `🖼️ [${catLabel}] ${imagesCopy.length} bild(er)` + (prompt ? " — " + prompt : "")
+        : "🖼️ " + prompt;
 
       inputEl.value = "";
       inputEl.style.height = "auto";
       sendBtn.disabled = true;
       imgBtn.disabled = true;
       loading = true;
-      clearUpload();
+      clearAllUploads();
 
       emptyEl.style.display = "none";
       msgList.style.display = "flex";
@@ -1260,15 +1265,16 @@
       // Show loading
       const loadDiv = document.createElement("div");
       loadDiv.className = "msg assistant";
+      const loadingText = hasImages ? "Bearbetar bilder..." : "Genererar bild...";
       loadDiv.innerHTML = `
         <div class="msg-avatar" style="background:var(--accent-bg);color:var(--accent-fg)">${botSvg}</div>
-        <div class="msg-bubble"><div class="img-loading"><div class="spinner"></div> ${hasImage ? 'Redigerar bild...' : 'Genererar bild...'}</div></div>
+        <div class="msg-bubble"><div class="img-loading"><div class="spinner"></div> ${loadingText}</div></div>
       `;
       msgList.appendChild(loadDiv);
       scrollDown();
 
-      const body = { prompt: prompt || "Transform this image creatively" };
-      if (imageData) body.image = imageData;
+      const body = { prompt: prompt || "Transform these images creatively", category: cat };
+      if (imagesCopy.length > 0) body.images = imagesCopy;
 
       try {
         const resp = await fetch(IMAGE_URL, {
@@ -1291,10 +1297,10 @@
           const data = await resp.json();
           let content = data.text || "";
           if (data.images && data.images.length > 0) {
-            const imgUrl = data.images[0].image_url?.url || data.images[0].url;
-            if (imgUrl) {
-              content += `\n\n![Genererad bild](${imgUrl})`;
-            }
+            data.images.forEach((img, i) => {
+              const imgUrl = img.image_url?.url || img.url;
+              if (imgUrl) content += `\n\n![Resultat ${i+1}](${imgUrl})`;
+            });
           }
           if (!content) content = "Kunde inte generera någon bild.";
           messages.push({ role: "assistant", content });
