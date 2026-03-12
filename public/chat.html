@@ -810,51 +810,39 @@
     const loginDesc = document.getElementById("loginDesc");
     const loginBtn = document.getElementById("loginBtn");
 
-    function checkLoginState() {
-      const hasPassword = !!localStorage.getItem(PW_KEY);
-      const hasSession = !!sessionStorage.getItem(SESSION_KEY);
+    // Default password hash - set on first load if not already changed
+    const DEFAULT_PW = "Elias11";
+    async function ensureDefaultPassword() {
+      if (!localStorage.getItem(PW_KEY)) {
+        const hash = await hashPw(DEFAULT_PW);
+        localStorage.setItem(PW_KEY, hash);
+      }
+    }
 
+    function checkLoginState() {
+      const hasSession = !!sessionStorage.getItem(SESSION_KEY);
       if (hasSession) {
         loginScreen.classList.add("hidden");
         return;
       }
-
       loginScreen.classList.remove("hidden");
-      if (hasPassword) {
-        loginTitle.textContent = "Välkommen tillbaka";
-        loginDesc.textContent = "Ange ditt lösenord för att logga in";
-        loginPwConfirm.style.display = "none";
-        loginBtn.textContent = "Logga in";
-      } else {
-        loginTitle.textContent = "Välkommen";
-        loginDesc.textContent = "Skapa ett lösenord för att komma igång";
-        loginPwConfirm.style.display = "";
-        loginBtn.textContent = "Skapa & logga in";
-      }
+      loginTitle.textContent = "Välkommen";
+      loginDesc.textContent = "Ange lösenord för att logga in";
+      loginPwConfirm.style.display = "none";
+      loginBtn.textContent = "Logga in";
       loginPw.value = "";
-      loginPwConfirm.value = "";
       loginError.textContent = "";
       loginPw.focus();
     }
 
     async function handleLogin() {
       const pw = loginPw.value;
-      const hasPassword = !!localStorage.getItem(PW_KEY);
-
       if (!pw) { loginError.textContent = "Ange ett lösenord."; return; }
-      if (pw.length < 4) { loginError.textContent = "Minst 4 tecken."; return; }
 
-      if (hasPassword) {
-        const hash = await hashPw(pw);
-        if (hash !== localStorage.getItem(PW_KEY)) {
-          loginError.textContent = "Fel lösenord.";
-          return;
-        }
-      } else {
-        const confirm = loginPwConfirm.value;
-        if (pw !== confirm) { loginError.textContent = "Lösenorden matchar inte."; return; }
-        const hash = await hashPw(pw);
-        localStorage.setItem(PW_KEY, hash);
+      const hash = await hashPw(pw);
+      if (hash !== localStorage.getItem(PW_KEY)) {
+        loginError.textContent = "Fel lösenord.";
+        return;
       }
 
       sessionStorage.setItem(SESSION_KEY, "1");
@@ -1476,7 +1464,7 @@
     }
 
     // Init
-    checkLoginState();
+    ensureDefaultPassword().then(() => checkLoginState());
     loadChats();
     renderChatList();
     const savedTheme = localStorage.getItem(THEME_KEY);
