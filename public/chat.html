@@ -1157,10 +1157,12 @@
       overlayEl.classList.remove("show");
     }
 
-    inputEl.addEventListener("input", () => {
+    function updateSendBtn() {
       const hasText = !!inputEl.value.trim();
-      sendBtn.disabled = !hasText || loading;
-    });
+      const hasImages = uploadedImages.length > 0;
+      sendBtn.disabled = (!hasText && !hasImages) || loading;
+    }
+    inputEl.addEventListener("input", updateSendBtn);
 
     // ── Dots menu ──
     function toggleDotsMenu() {
