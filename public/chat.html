@@ -1309,7 +1309,7 @@
 
       const imagesCopy = [...uploadedImages];
       const catLabels = { combine: "Kombinera", collage: "Collage", style: "Stilöverföring", morph: "Morfa", edit: "Redigera", generate: "Generera" };
-      const cat = hasImages && imagesCopy.length > 1 ? selectedCategory : (hasImages ? "edit" : "generate");
+      const cat = hasImages ? selectedCategory : "generate";
       const catLabel = catLabels[cat] || cat;
       const displayText = hasImages
         ? `🖼️ [${catLabel}] ${imagesCopy.length} bild(er)` + (prompt ? " — " + prompt : "")
