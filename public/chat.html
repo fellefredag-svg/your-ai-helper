@@ -1052,8 +1052,8 @@
       const count = uploadedImages.length;
       uploadCount.textContent = count + "/6 bilder";
       uploadPreviewArea.classList.toggle("hidden", count === 0);
-      categoryBar.classList.toggle("hidden", count < 2);
-      imgBtn.disabled = count === 0 && !inputEl.value.trim();
+      categoryBar.classList.toggle("hidden", count === 0);
+      if (typeof updateSendBtn === 'function') updateSendBtn();
       // Reset file inputs
       fileInput.value = "";
     }
