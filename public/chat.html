@@ -1187,13 +1187,21 @@
         } else {
           inputEl.focus();
           inputEl.placeholder = "Beskriv bilden du vill generera...";
-          // Set a flag so next send generates image
           window._generateOnSend = true;
           inputEl.addEventListener("input", function resetPlaceholder() {
             inputEl.placeholder = "Skriv ett meddelande...";
             inputEl.removeEventListener("input", resetPlaceholder);
           }, { once: true });
         }
+      } else if (type === "category") {
+        // Select category and open file picker for images
+        selectedCategory = text;
+        // Update category bar buttons
+        document.querySelectorAll('.img-cat-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.cat === text);
+        });
+        // Open file picker to upload images for this category
+        fileInput.click();
       } else if (type === "suggest") {
         send(text);
       }
