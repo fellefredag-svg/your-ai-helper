@@ -1067,7 +1067,7 @@
       uploadedImages = [];
       renderUploadPreviews();
       fileInput.value = "";
-      imgBtn.disabled = !inputEl.value.trim();
+      if (typeof updateSendBtn === 'function') updateSendBtn();
     }
     const overlayEl = document.getElementById("overlay");
 
