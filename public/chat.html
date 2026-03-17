@@ -767,6 +767,12 @@
             <button class="dots-popup-item" onclick="dotsAction('upload')"><span class="dot-icon">📷</span> Ladda upp bilder</button>
             <button class="dots-popup-item" onclick="dotsAction('generate')"><span class="dot-icon">🖼️</span> Generera bild från text</button>
             <div class="dots-popup-divider"></div>
+            <button class="dots-popup-item" onclick="dotsAction('category','combine')"><span class="dot-icon">🧩</span> Kombinera — Slå ihop bilder</button>
+            <button class="dots-popup-item" onclick="dotsAction('category','collage')"><span class="dot-icon">🎨</span> Collage — Konstnärligt collage</button>
+            <button class="dots-popup-item" onclick="dotsAction('category','style')"><span class="dot-icon">✨</span> Stilöverföring — Applicera stil</button>
+            <button class="dots-popup-item" onclick="dotsAction('category','morph')"><span class="dot-icon">🔄</span> Morfa/Blanda — Smält ihop</button>
+            <button class="dots-popup-item" onclick="dotsAction('category','edit')"><span class="dot-icon">✏️</span> Redigera — Med instruktioner</button>
+            <div class="dots-popup-divider"></div>
             <button class="dots-popup-item" onclick="dotsAction('suggest','Förklara hur internet fungerar')"><span class="dot-icon">🌐</span> Förklara hur internet fungerar</button>
             <button class="dots-popup-item" onclick="dotsAction('suggest','Ge mig tips för att plugga effektivt')"><span class="dot-icon">📚</span> Tips för att plugga</button>
             <button class="dots-popup-item" onclick="dotsAction('suggest','Skriv en kort dikt om programmering')"><span class="dot-icon">✍️</span> Skriv en dikt</button>
@@ -1181,13 +1187,21 @@
         } else {
           inputEl.focus();
           inputEl.placeholder = "Beskriv bilden du vill generera...";
-          // Set a flag so next send generates image
           window._generateOnSend = true;
           inputEl.addEventListener("input", function resetPlaceholder() {
             inputEl.placeholder = "Skriv ett meddelande...";
             inputEl.removeEventListener("input", resetPlaceholder);
           }, { once: true });
         }
+      } else if (type === "category") {
+        // Select category and open file picker for images
+        selectedCategory = text;
+        // Update category bar buttons
+        document.querySelectorAll('.img-cat-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.cat === text);
+        });
+        // Open file picker to upload images for this category
+        fileInput.click();
       } else if (type === "suggest") {
         send(text);
       }
