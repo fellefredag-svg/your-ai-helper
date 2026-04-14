@@ -1805,7 +1805,7 @@
     }
 
     // Init
-    ensureDefaultPassword().then(() => checkLoginState());
+    checkLoginState();
     loadChats();
     renderChatList();
     const savedTheme = localStorage.getItem(THEME_KEY);
