@@ -65,13 +65,14 @@
     .login-box .login-icon svg { width: 24px; height: 24px; color: var(--accent-fg); }
     .login-box h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
     .login-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+    .login-box input[type="text"],
     .login-box input[type="password"] {
       width: 100%; padding: 10px 14px; border-radius: 12px;
       border: 1px solid var(--border); background: var(--input-bg);
       font-size: 14px; font-family: inherit; color: var(--text);
       outline: none; margin-bottom: 8px;
     }
-    .login-box input[type="password"]:focus {
+    .login-box input:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(14, 154, 131, 0.15);
     }
@@ -85,12 +86,64 @@
     .login-box .login-error {
       color: var(--danger); font-size: 12px; margin-top: 8px; min-height: 18px;
     }
-    .login-box .login-confirm {
-      width: 100%; padding: 10px 14px; border-radius: 12px;
-      border: 1px solid var(--border); background: var(--input-bg);
-      font-size: 14px; font-family: inherit; color: var(--text);
-      outline: none; margin-bottom: 8px;
+    .login-box .login-toggle {
+      margin-top: 12px; font-size: 13px; color: var(--text-muted);
     }
+    .login-box .login-toggle a {
+      color: var(--primary); cursor: pointer; text-decoration: underline;
+    }
+
+    /* Users panel */
+    .users-panel { display: none; flex-direction: column; height: 100%; }
+    .users-panel.active { display: flex; }
+    .users-panel-header { padding: 16px; border-bottom: 1px solid var(--border); }
+    .users-panel-header h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .users-panel-header input {
+      width: 100%; padding: 8px 12px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--input-bg);
+      font-size: 13px; font-family: inherit; color: var(--text); outline: none;
+    }
+    .users-list { flex: 1; overflow-y: auto; padding: 8px; }
+    .user-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px; margin-bottom: 4px;
+      font-size: 13px;
+    }
+    .user-item:hover { background: var(--input-bg); }
+    .user-item .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--accent-bg); color: var(--accent-fg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600;
+    }
+    .user-item .user-info { flex: 1; }
+    .user-item .user-name { font-weight: 500; }
+    .user-item .user-date { font-size: 11px; color: var(--text-muted); }
+    .user-item .user-status {
+      font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500;
+    }
+    .user-item .user-status.active { background: #d6f5ef; color: #0c3d33; }
+    .user-item .user-status.kicked { background: #fde8e8; color: #c53030; }
+    .user-item .kick-btn {
+      padding: 4px 10px; border-radius: 8px; border: none;
+      background: var(--danger); color: #fff; font-size: 11px;
+      font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .user-item .kick-btn:hover { opacity: 0.85; }
+    .user-item .kick-btn.restore { background: var(--primary); }
+
+    /* Sidebar tabs */
+    .sidebar-tabs {
+      display: flex; border-bottom: 1px solid var(--border);
+    }
+    .sidebar-tab {
+      flex: 1; padding: 10px; border: none; background: none;
+      font-family: inherit; font-size: 13px; font-weight: 500;
+      color: var(--text-muted); cursor: pointer;
+      border-bottom: 2px solid transparent; transition: all 0.15s;
+    }
+    .sidebar-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .sidebar-tab:hover { color: var(--text); }
 
     /* Change password modal */
     .pw-modal-overlay {
@@ -635,12 +688,94 @@
       <div class="login-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       </div>
-      <h2 id="loginTitle">Välkommen</h2>
-      <p id="loginDesc">Skapa ett lösenord för att komma igång</p>
-      <input type="password" id="loginPw" placeholder="Lösenord" onkeydown="if(event.key==='Enter')document.getElementById('loginPwConfirm').style.display!=='none'?document.getElementById('loginPwConfirm').focus():handleLogin()">
-      <input type="password" id="loginPwConfirm" placeholder="Bekräfta lösenord" onkeydown="if(event.key==='Enter')handleLogin()">
-      <button class="login-btn" onclick="handleLogin()" id="loginBtn">Skapa & logga in</button>
+      <h2 id="loginTitle">Logga in</h2>
+      <p id="loginDesc">Ange ditt användarnamn och lösenord</p>
+      <input type="text" id="loginUsername" placeholder="Användarnamn">
+      <input type="password" id="loginPw" placeholder="Lösenord" onkeydown="if(event.key==='Enter')handleLogin()">
+      <input type="password" id="loginPwConfirm" placeholder="Bekräfta lösenord" style="display:none" onkeydown="if(event.key==='Enter')handleLogin()">
+      <button class="login-btn" onclick="handleLogin()" id="loginBtn">Logga in</button>
       <div class="login-error" id="loginError"></div>
+      <div class="login-toggle" id="loginToggle">
+        Inget konto? <a onclick="toggleLoginMode()">Skapa konto</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin password modal (for kick) -->
+  <div class="pw-modal-overlay hidden" id="adminModal">
+    <div class="pw-modal">
+      <h3>🔒 Admin-verifiering</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;text-align:center;">Ange admin-lösenord för att hantera användare</p>
+      <input type="password" id="adminPw" placeholder="Admin-lösenord" onkeydown="if(event.key==='Enter')verifyAdmin()">
+      <div class="pw-error" id="adminError"></div>
+      <div class="pw-modal-btns">
+        <button class="pw-cancel" onclick="closeAdminModal()">Avbryt</button>
+        <button class="pw-save" onclick="verifyAdmin()">Verifiera</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change password modal -->
+  <div class="pw-modal-overlay hidden" id="pwModal">
+    <div class="pw-modal">
+      <h3>🔑 Byt lösenord</h3>
+      <input type="password" id="pwOld" placeholder="Nuvarande lösenord">
+      <input type="password" id="pwNew" placeholder="Nytt lösenord">
+      <input type="password" id="pwNewConfirm" placeholder="Bekräfta nytt lösenord">
+      <div class="pw-error" id="pwError"></div>
+      <div class="pw-modal-btns">
+        <button class="pw-cancel" onclick="closePwModal()">Avbryt</button>
+        <button class="pw-save" onclick="changePassword()">Spara</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay for mobile sidebar -->
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active" id="tabChats" onclick="switchTab('chats')">💬 Chattar</button>
+      <button class="sidebar-tab" id="tabUsers" onclick="switchTab('users')">👥 Användare</button>
+    </div>
+
+    <!-- Chats panel -->
+    <div class="chats-panel" id="chatsPanel" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+      <div class="sidebar-header">
+        <button class="new-chat-btn" onclick="newChat()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ny chatt
+        </button>
+      </div>
+      <div class="chat-list" id="chatList">
+        <div class="no-chats" id="noChats">Inga sparade chattar</div>
+      </div>
+    </div>
+
+    <!-- Users panel -->
+    <div class="users-panel" id="usersPanel">
+      <div class="users-panel-header">
+        <h3>👥 Registrerade användare</h3>
+      </div>
+      <div class="users-list" id="usersList">
+        <div class="no-chats">Laddar...</div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div style="font-size:12px;color:var(--text-muted);padding:0 4px 8px;display:flex;align-items:center;gap:6px;" id="currentUserDisplay">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span id="currentUserName">—</span>
+      </div>
+      <button class="sidebar-footer-btn" onclick="openPwModal()" style="margin-bottom:6px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Byt lösenord
+      </button>
+      <button class="sidebar-footer-btn" onclick="logout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logga ut
+      </button>
     </div>
   </div>
 
@@ -794,73 +929,157 @@
   <script>
     const CHAT_URL = "https://uthfklmmfbjuxnrshejk.supabase.co/functions/v1/chat";
     const IMAGE_URL = "https://uthfklmmfbjuxnrshejk.supabase.co/functions/v1/generate-image";
+    const SUPABASE_URL = "https://uthfklmmfbjuxnrshejk.supabase.co";
     const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0aGZrbG1tZmJqdXhucnNoZWprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2Mjg2MDIsImV4cCI6MjA4ODIwNDYwMn0.94AlXJuyzmZqmeGPJ1wsADsopaDGnML0HqgSyV4oHr0";
     const STORAGE_KEY = "ai_chats";
     const THEME_KEY = "ai_theme";
-    const PW_KEY = "ai_pw_hash";
     const SESSION_KEY = "ai_session";
+    const ADMIN_PW = "Elias11";
 
-    // ── Simple hash for local password ──
+    // ── Simple hash ──
     async function hashPw(pw) {
       const enc = new TextEncoder().encode(pw + "ai-salt-2024");
       const buf = await crypto.subtle.digest("SHA-256", enc);
       return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // ── Login logic ──
+    // ── Supabase REST helpers ──
+    async function sbFetch(path, method = "GET", body = null) {
+      const opts = {
+        method,
+        headers: {
+          "apikey": ANON_KEY,
+          "Authorization": "Bearer " + ANON_KEY,
+          "Content-Type": "application/json",
+          "Prefer": method === "GET" ? "" : "return=representation",
+        }
+      };
+      if (body) opts.body = JSON.stringify(body);
+      const resp = await fetch(SUPABASE_URL + "/rest/v1/" + path, opts);
+      if (!resp.ok) throw new Error(await resp.text());
+      const text = await resp.text();
+      return text ? JSON.parse(text) : null;
+    }
+
+    // ── Login / Register ──
+    let isRegisterMode = false;
+    let currentUser = null; // { id, username }
+    let isAdminVerified = false;
+    let pendingKickUserId = null;
+
     const loginScreen = document.getElementById("loginScreen");
+    const loginUsername = document.getElementById("loginUsername");
     const loginPw = document.getElementById("loginPw");
     const loginPwConfirm = document.getElementById("loginPwConfirm");
     const loginError = document.getElementById("loginError");
     const loginTitle = document.getElementById("loginTitle");
     const loginDesc = document.getElementById("loginDesc");
     const loginBtn = document.getElementById("loginBtn");
+    const loginToggle = document.getElementById("loginToggle");
 
-    // Default password hash - set on first load if not already changed
-    const DEFAULT_PW = "Elias11";
-    async function ensureDefaultPassword() {
-      if (!localStorage.getItem(PW_KEY)) {
-        const hash = await hashPw(DEFAULT_PW);
-        localStorage.setItem(PW_KEY, hash);
+    function toggleLoginMode() {
+      isRegisterMode = !isRegisterMode;
+      loginError.textContent = "";
+      if (isRegisterMode) {
+        loginTitle.textContent = "Skapa konto";
+        loginDesc.textContent = "Välj ett användarnamn och lösenord";
+        loginPwConfirm.style.display = "";
+        loginBtn.textContent = "Skapa konto";
+        loginToggle.innerHTML = 'Har redan konto? <a onclick="toggleLoginMode()">Logga in</a>';
+      } else {
+        loginTitle.textContent = "Logga in";
+        loginDesc.textContent = "Ange ditt användarnamn och lösenord";
+        loginPwConfirm.style.display = "none";
+        loginBtn.textContent = "Logga in";
+        loginToggle.innerHTML = 'Inget konto? <a onclick="toggleLoginMode()">Skapa konto</a>';
       }
     }
 
     function checkLoginState() {
-      const hasSession = !!sessionStorage.getItem(SESSION_KEY);
-      if (hasSession) {
-        loginScreen.classList.add("hidden");
-        return;
+      const session = sessionStorage.getItem(SESSION_KEY);
+      if (session) {
+        try {
+          currentUser = JSON.parse(session);
+          loginScreen.classList.add("hidden");
+          document.getElementById("currentUserName").textContent = currentUser.username;
+          return;
+        } catch {}
       }
       loginScreen.classList.remove("hidden");
-      loginTitle.textContent = "Välkommen";
-      loginDesc.textContent = "Ange lösenord för att logga in";
-      loginPwConfirm.style.display = "none";
-      loginBtn.textContent = "Logga in";
+      currentUser = null;
+      loginUsername.value = "";
       loginPw.value = "";
+      loginPwConfirm.value = "";
       loginError.textContent = "";
-      loginPw.focus();
+      loginUsername.focus();
     }
 
     async function handleLogin() {
+      const username = loginUsername.value.trim();
       const pw = loginPw.value;
-      if (!pw) { loginError.textContent = "Ange ett lösenord."; return; }
+      loginError.textContent = "";
+
+      if (!username) { loginError.textContent = "Ange användarnamn."; return; }
+      if (username.length < 2) { loginError.textContent = "Minst 2 tecken."; return; }
+      if (!pw) { loginError.textContent = "Ange lösenord."; return; }
 
       const hash = await hashPw(pw);
-      if (hash !== localStorage.getItem(PW_KEY)) {
-        loginError.textContent = "Fel lösenord.";
-        return;
-      }
 
-      sessionStorage.setItem(SESSION_KEY, "1");
-      loginScreen.classList.add("hidden");
-      inputEl.focus();
+      try {
+        if (isRegisterMode) {
+          const confirmPw = loginPwConfirm.value;
+          if (pw.length < 4) { loginError.textContent = "Lösenord: minst 4 tecken."; return; }
+          if (pw !== confirmPw) { loginError.textContent = "Lösenorden matchar inte."; return; }
+
+          // Check if username exists
+          const existing = await sbFetch("chat_users?username=eq." + encodeURIComponent(username) + "&select=id");
+          if (existing && existing.length > 0) {
+            loginError.textContent = "Användarnamnet är redan taget.";
+            return;
+          }
+
+          const created = await sbFetch("chat_users", "POST", { username, password_hash: hash });
+          currentUser = { id: created[0].id, username: created[0].username };
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+          loginScreen.classList.add("hidden");
+          document.getElementById("currentUserName").textContent = currentUser.username;
+          inputEl.focus();
+        } else {
+          // Login
+          const users = await sbFetch("chat_users?username=eq." + encodeURIComponent(username) + "&select=id,username,password_hash,is_active");
+          if (!users || users.length === 0) {
+            loginError.textContent = "Användare hittades inte.";
+            return;
+          }
+          const user = users[0];
+          if (user.password_hash !== hash) {
+            loginError.textContent = "Fel lösenord.";
+            return;
+          }
+          if (!user.is_active) {
+            loginError.textContent = "Ditt konto har blivit avstängt.";
+            return;
+          }
+          currentUser = { id: user.id, username: user.username };
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+          loginScreen.classList.add("hidden");
+          document.getElementById("currentUserName").textContent = currentUser.username;
+          inputEl.focus();
+        }
+      } catch (err) {
+        console.error(err);
+        loginError.textContent = "Något gick fel. Försök igen.";
+      }
     }
 
     function logout() {
       sessionStorage.removeItem(SESSION_KEY);
+      currentUser = null;
+      isAdminVerified = false;
       checkLoginState();
     }
 
+    // ── Change password ──
     function openPwModal() {
       document.getElementById("pwModal").classList.remove("hidden");
       document.getElementById("pwOld").value = "";
@@ -870,31 +1089,138 @@
       document.getElementById("pwOld").focus();
       closeSidebar();
     }
-
-    function closePwModal() {
-      document.getElementById("pwModal").classList.add("hidden");
-    }
+    function closePwModal() { document.getElementById("pwModal").classList.add("hidden"); }
 
     async function changePassword() {
       const old = document.getElementById("pwOld").value;
       const newPw = document.getElementById("pwNew").value;
       const confirm = document.getElementById("pwNewConfirm").value;
       const errEl = document.getElementById("pwError");
-
       if (!old || !newPw) { errEl.textContent = "Fyll i alla fält."; return; }
       if (newPw.length < 4) { errEl.textContent = "Minst 4 tecken."; return; }
-      if (newPw !== confirm) { errEl.textContent = "Nya lösenorden matchar inte."; return; }
+      if (newPw !== confirm) { errEl.textContent = "Lösenorden matchar inte."; return; }
+      if (!currentUser) return;
 
       const oldHash = await hashPw(old);
-      if (oldHash !== localStorage.getItem(PW_KEY)) {
+      // Verify current password
+      const users = await sbFetch("chat_users?id=eq." + currentUser.id + "&select=password_hash");
+      if (!users || users.length === 0 || users[0].password_hash !== oldHash) {
         errEl.textContent = "Fel nuvarande lösenord.";
         return;
       }
-
       const newHash = await hashPw(newPw);
-      localStorage.setItem(PW_KEY, newHash);
+      await sbFetch("chat_users?id=eq." + currentUser.id, "PATCH", { password_hash: newHash });
       closePwModal();
       alert("Lösenordet har ändrats!");
+    }
+
+    // ── Sidebar tabs ──
+    function switchTab(tab) {
+      document.getElementById("tabChats").classList.toggle("active", tab === "chats");
+      document.getElementById("tabUsers").classList.toggle("active", tab === "users");
+      document.getElementById("chatsPanel").style.display = tab === "chats" ? "flex" : "none";
+      const usersPanel = document.getElementById("usersPanel");
+      if (tab === "users") {
+        usersPanel.classList.add("active");
+        loadUsers();
+      } else {
+        usersPanel.classList.remove("active");
+      }
+    }
+
+    // ── Users list ──
+    async function loadUsers() {
+      const list = document.getElementById("usersList");
+      list.innerHTML = '<div class="no-chats">Laddar...</div>';
+      try {
+        const users = await sbFetch("chat_users?select=id,username,is_active,created_at&order=created_at.desc");
+        if (!users || users.length === 0) {
+          list.innerHTML = '<div class="no-chats">Inga användare ännu</div>';
+          return;
+        }
+        list.innerHTML = "";
+        users.forEach(u => {
+          const div = document.createElement("div");
+          div.className = "user-item";
+          const initial = u.username.charAt(0).toUpperCase();
+          const date = new Date(u.created_at).toLocaleDateString("sv-SE");
+          const statusClass = u.is_active ? "active" : "kicked";
+          const statusText = u.is_active ? "Aktiv" : "Avstängd";
+          const actionBtn = u.is_active
+            ? `<button class="kick-btn" onclick="kickUser('${u.id}','${escapeHtml(u.username)}')">Kicka</button>`
+            : `<button class="kick-btn restore" onclick="restoreUser('${u.id}')">Återställ</button>`;
+          div.innerHTML = `
+            <div class="user-avatar">${initial}</div>
+            <div class="user-info">
+              <div class="user-name">${escapeHtml(u.username)}</div>
+              <div class="user-date">Skapad: ${date}</div>
+            </div>
+            <span class="user-status ${statusClass}">${statusText}</span>
+            ${actionBtn}
+          `;
+          list.appendChild(div);
+        });
+      } catch (err) {
+        console.error(err);
+        list.innerHTML = '<div class="no-chats">Kunde inte ladda användare</div>';
+      }
+    }
+
+    // ── Admin kick/restore ──
+    function kickUser(userId, username) {
+      pendingKickUserId = userId;
+      if (isAdminVerified) {
+        doKick(userId, false);
+      } else {
+        document.getElementById("adminModal").classList.remove("hidden");
+        document.getElementById("adminPw").value = "";
+        document.getElementById("adminError").textContent = "";
+        document.getElementById("adminPw").focus();
+      }
+    }
+
+    function restoreUser(userId) {
+      pendingKickUserId = userId;
+      if (isAdminVerified) {
+        doKick(userId, true);
+      } else {
+        document.getElementById("adminModal").classList.remove("hidden");
+        document.getElementById("adminPw").value = "";
+        document.getElementById("adminError").textContent = "";
+        document.getElementById("adminPw").focus();
+      }
+    }
+
+    function closeAdminModal() {
+      document.getElementById("adminModal").classList.add("hidden");
+      pendingKickUserId = null;
+    }
+
+    async function verifyAdmin() {
+      const pw = document.getElementById("adminPw").value;
+      if (pw !== ADMIN_PW) {
+        document.getElementById("adminError").textContent = "Fel admin-lösenord.";
+        return;
+      }
+      isAdminVerified = true;
+      closeAdminModal();
+      if (pendingKickUserId) {
+        // Determine action based on current status
+        const users = await sbFetch("chat_users?id=eq." + pendingKickUserId + "&select=is_active");
+        const isActive = users && users[0] && users[0].is_active;
+        doKick(pendingKickUserId, !isActive);
+      }
+    }
+
+    async function doKick(userId, restore) {
+      try {
+        await sbFetch("chat_users?id=eq." + userId, "PATCH", { is_active: restore });
+        loadUsers();
+      } catch (err) {
+        console.error(err);
+        alert("Kunde inte uppdatera användare.");
+      }
+      pendingKickUserId = null;
     }
 
     // ── Themes ──
@@ -1479,7 +1805,7 @@
     }
 
     // Init
-    ensureDefaultPassword().then(() => checkLoginState());
+    checkLoginState();
     loadChats();
     renderChatList();
     const savedTheme = localStorage.getItem(THEME_KEY);
