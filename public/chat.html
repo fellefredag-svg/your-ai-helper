@@ -1670,20 +1670,27 @@
       if (imagesCopy.length > 0) body.images = imagesCopy;
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 min timeout
         const resp = await fetch(IMAGE_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": "Bearer " + ANON_KEY,
+            "apikey": ANON_KEY,
           },
           body: JSON.stringify(body),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
 
         loadDiv.remove();
 
         if (!resp.ok) {
+          let detail = "";
+          try { const j = await resp.json(); detail = j.error ? " (" + j.error + ")" : ""; } catch {}
           const errMsg = resp.status === 429 ? "För många förfrågningar, vänta lite." :
-                         resp.status === 402 ? "Krediter slut." : "Kunde inte generera bild.";
+                         resp.status === 402 ? "Krediter slut." : "Kunde inte generera bild." + detail;
           addMessage("assistant", errMsg);
           messages.push({ role: "assistant", content: errMsg });
         } else {
@@ -1702,8 +1709,14 @@
         saveCurrentChat();
       } catch (err) {
         loadDiv.remove();
-        addMessage("assistant", "Kunde inte ansluta. Kontrollera din internetanslutning.");
+        console.error("generateImage error:", err);
+        const msg = err.name === "AbortError"
+          ? "Bildgenereringen tog för lång tid. Försök igen med en enklare prompt eller färre bilder."
+          : "Kunde inte ansluta: " + (err.message || err.name || "okänt fel");
+        addMessage("assistant", msg);
+        messages.push({ role: "assistant", content: msg });
       }
+
 
       loading = false;
       sendBtn.disabled = !inputEl.value.trim();
