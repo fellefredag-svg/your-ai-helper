@@ -996,22 +996,19 @@
     }
 
     function checkLoginState() {
+      // Inloggning är valfri – gäst-läge som standard.
+      loginScreen.classList.add("hidden");
       const session = sessionStorage.getItem(SESSION_KEY);
       if (session) {
         try {
           currentUser = JSON.parse(session);
-          loginScreen.classList.add("hidden");
           document.getElementById("currentUserName").textContent = currentUser.username;
           return;
         } catch {}
       }
-      loginScreen.classList.remove("hidden");
-      currentUser = null;
-      loginUsername.value = "";
-      loginPw.value = "";
-      loginPwConfirm.value = "";
-      loginError.textContent = "";
-      loginUsername.focus();
+      currentUser = { id: "guest", username: "Gäst" };
+      const el = document.getElementById("currentUserName");
+      if (el) el.textContent = "Gäst";
     }
 
     async function handleLogin() {
